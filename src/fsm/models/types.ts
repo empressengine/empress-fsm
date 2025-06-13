@@ -43,7 +43,7 @@ export type StateLifecycle<T extends object> = (
  */
 export interface TransitionConfig<T extends object> {
     to: string;
-    condition: (store: Store<T>) => boolean;
+    condition: (state: T, prev: T) => boolean;
 };
 
 /**

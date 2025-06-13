@@ -109,7 +109,7 @@ export class FSM<T extends object> implements IFSM<T> {
         });
 
         this._store.subscribe(async (data) => {
-            const update = () => data;
+            const update = () => this._store.cloneState();
             const currentState = this._states.get(this._currentState);
             
             if (!currentState || !currentState.transitions || this._isTransitioning) return;
@@ -122,7 +122,7 @@ export class FSM<T extends object> implements IFSM<T> {
                     this._currentEnterExecutionId = null;
                     this._isExecutingLifecycle = false;
 
-                    await this.applyUpdate(update);
+                    await this.checkTransitions();
                     return;
                 }
 
@@ -130,7 +130,7 @@ export class FSM<T extends object> implements IFSM<T> {
                 return;
             }
 
-            await this.applyUpdate(update);
+            await this.checkTransitions();
         });
     }
 
@@ -261,20 +261,9 @@ export class FSM<T extends object> implements IFSM<T> {
      */
     private async applyPendingUpdates(): Promise<void> {
         while (this._pendingUpdates.length > 0) {
-            const update = this._pendingUpdates.shift()!;
-            await this.applyUpdate(update);
+            this._pendingUpdates.shift()!;
+            await this.checkTransitions();
         }
-    }
-
-    /**
-     * @description
-     * Применяет обновление состояния и проверяет переходы.
-     * 
-     * @param update - Функция обновления состояния
-     */
-    private async applyUpdate(update: (state: T) => Partial<T>): Promise<void> {
-        this._store.update(update);
-        await this.checkTransitions();
     }
 
     /**
@@ -287,7 +276,7 @@ export class FSM<T extends object> implements IFSM<T> {
         if (!currentState || !currentState.transitions || this._isTransitioning || this._isExecutingLifecycle) return;
 
         for (const transition of currentState.transitions) {
-            const canTransit = transition.condition(this._store);
+            const canTransit = transition.condition(this._store.state, this._store.prev);
 
             if (canTransit) {
                 const strategy = this.getTransitionStrategy(currentState, transition.to);
