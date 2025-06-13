@@ -132,13 +132,6 @@ export declare class FSM<T extends object> implements IFSM<T> {
     private applyPendingUpdates;
     /**
      * @description
-     * Применяет обновление состояния и проверяет переходы.
-     *
-     * @param update - Функция обновления состояния
-     */
-    private applyUpdate;
-    /**
-     * @description
      * Проверяет возможные переходы из текущего состояния.
      * Если условие перехода выполняется, осуществляет переход в новое состояние.
      */
@@ -242,7 +235,7 @@ export declare type StateLifecycle<T extends object> = (data: IStateLifeCycleDat
  */
 export declare interface TransitionConfig<T extends object> {
     to: string;
-    condition: (store: Store<T>) => boolean;
+    condition: (state: T, prev: T) => boolean;
 }
 
 /**

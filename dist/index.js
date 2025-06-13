@@ -1,6 +1,6 @@
 import { Utils as h } from "empress-core";
 var c = /* @__PURE__ */ ((o) => (o.Stop = "stop", o.Wait = "wait", o))(c || {});
-class E {
+class f {
   /**
    * @description
    * Создает новый экземпляр конечного автомата.
@@ -14,20 +14,20 @@ class E {
    * @param config.hooks - Глобальные хуки (опционально)
    */
   constructor(t, e) {
-    this._executionController = t, this._currentEnterExecutionId = null, this._currentExitExecutionId = null, this._isTransitioning = !1, this._isExecutingLifecycle = !1, this._pendingUpdates = [], this._name = e.name, this._store = e.store, this._states = /* @__PURE__ */ new Map(), this._hooks = e.hooks, this._currentState = e.initialState, e.states.forEach((i) => {
-      this._states.set(i.name, i);
-    }), this._store.subscribe(async (i) => {
-      const s = () => i, n = this._states.get(this._currentState);
+    this._executionController = t, this._currentEnterExecutionId = null, this._currentExitExecutionId = null, this._isTransitioning = !1, this._isExecutingLifecycle = !1, this._pendingUpdates = [], this._name = e.name, this._store = e.store, this._states = /* @__PURE__ */ new Map(), this._hooks = e.hooks, this._currentState = e.initialState, e.states.forEach((s) => {
+      this._states.set(s.name, s);
+    }), this._store.subscribe(async (s) => {
+      const i = () => this._store.cloneState(), n = this._states.get(this._currentState);
       if (!(!n || !n.transitions || this._isTransitioning)) {
         if (this._isExecutingLifecycle) {
           if (this.getTransitionStrategy(n, "") === c.Stop && this._currentEnterExecutionId) {
-            this._executionController.stop(this._currentEnterExecutionId), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.applyUpdate(s);
+            this._executionController.stop(this._currentEnterExecutionId), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.checkTransitions();
             return;
           }
-          this._pendingUpdates.push(s);
+          this._pendingUpdates.push(i);
           return;
         }
-        await this.applyUpdate(s);
+        await this.checkTransitions();
       }
     });
   }
@@ -85,10 +85,10 @@ class E {
       throw new Error(`Initial state '${this._currentState}' not found`);
     const e = h.createProxyDecorator(this._store.cloneState());
     this._lastStateCopy = e;
-    const i = this.createStateMethod(this._currentState, "", this._currentState, "onEnter", e);
-    if (i)
+    const s = this.createStateMethod(this._currentState, "", this._currentState, "onEnter", e);
+    if (s)
       try {
-        this._currentEnterExecutionId = i, this._isExecutingLifecycle = !0, await this._executionController.run(i);
+        this._currentEnterExecutionId = s, this._isExecutingLifecycle = !0, await this._executionController.run(s);
       } finally {
         this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.applyPendingUpdates();
       }
@@ -127,16 +127,16 @@ class E {
    * @param stateCopy - Копия данных состояния
    * @returns ID выполнения или undefined
    */
-  createStateMethod(t, e, i, s, n) {
+  createStateMethod(t, e, s, i, n) {
     var a;
     const r = this._states.get(t);
     if (!r)
       throw new Error(`State '${t}' not found`);
-    if (r[s]) {
-      const u = { fsmName: this._name, from: e, to: i, data: n }, _ = `[FSM][${s}] In ${this._name} from ${e} to ${i}`, l = this._executionController.create(r[s], u, _);
-      if ((a = this._hooks) != null && a[s]) {
-        const p = { fsmName: this._name, from: e, to: i, data: n };
-        this._hooks[s](p);
+    if (r[i]) {
+      const u = { fsmName: this._name, from: e, to: s, data: n }, _ = `[FSM][${i}] In ${this._name} from ${e} to ${s}`, l = this._executionController.create(r[i], u, _);
+      if ((a = this._hooks) != null && a[i]) {
+        const S = { fsmName: this._name, from: e, to: s, data: n };
+        this._hooks[i](S);
       }
       return l;
     }
@@ -153,12 +153,12 @@ class E {
   getTransitionStrategy(t, e) {
     if (!t.transitionStrategy) return c.Wait;
     if (typeof t.transitionStrategy == "function") {
-      const i = {
+      const s = {
         from: t.name,
         to: e,
         store: this._store
       };
-      return t.transitionStrategy(i);
+      return t.transitionStrategy(s);
     }
     return t.transitionStrategy;
   }
@@ -168,19 +168,8 @@ class E {
    * Используется при режиме Wait для обработки накопленных обновлений.
    */
   async applyPendingUpdates() {
-    for (; this._pendingUpdates.length > 0; ) {
-      const t = this._pendingUpdates.shift();
-      await this.applyUpdate(t);
-    }
-  }
-  /**
-   * @description
-   * Применяет обновление состояния и проверяет переходы.
-   * 
-   * @param update - Функция обновления состояния
-   */
-  async applyUpdate(t) {
-    this._store.update(t), await this.checkTransitions();
+    for (; this._pendingUpdates.length > 0; )
+      this._pendingUpdates.shift(), await this.checkTransitions();
   }
   /**
    * @description
@@ -191,7 +180,7 @@ class E {
     const t = this._states.get(this._currentState);
     if (!(!t || !t.transitions || this._isTransitioning || this._isExecutingLifecycle)) {
       for (const e of t.transitions)
-        if (e.condition(this._store)) {
+        if (e.condition(this._store.state, this._store.prev)) {
           this.getTransitionStrategy(t, e.to) === c.Stop && this._currentEnterExecutionId && (this._executionController.stop(this._currentEnterExecutionId), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1), await this.transition(e.to);
           break;
         }
@@ -207,21 +196,21 @@ class E {
   async transition(t) {
     try {
       this._isTransitioning = !0;
-      const e = this._states.get(this._currentState), i = this._states.get(t);
-      if (!e || !i)
+      const e = this._states.get(this._currentState), s = this._states.get(t);
+      if (!e || !s)
         throw new Error(`Invalid transition from '${this._currentState}' to '${t}'`);
-      const s = this._currentState, n = this.createStateMethod(s, s, "", "onExit", this._lastStateCopy);
+      const i = this._currentState, n = this.createStateMethod(i, i, "", "onExit", this._lastStateCopy);
       n && (this._currentExitExecutionId = n, this._isExecutingLifecycle = !0, await this._executionController.run(n, !1), this._currentExitExecutionId = null, this._isExecutingLifecycle = !1, await this.applyPendingUpdates()), e.subStates && e.subStates.stop(), this._currentState = t;
       const r = h.createProxyDecorator(this._store.cloneState());
       this._lastStateCopy = r;
-      const a = this.createStateMethod(t, s, t, "onEnter", r);
-      a && (this._currentEnterExecutionId = a, this._isExecutingLifecycle = !0, await this._executionController.run(a), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.checkTransitions()), i.subStates && i.subStates.start();
+      const a = this.createStateMethod(t, i, t, "onEnter", r);
+      a && (this._currentEnterExecutionId = a, this._isExecutingLifecycle = !0, await this._executionController.run(a), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.checkTransitions()), s.subStates && s.subStates.start();
     } finally {
       this._isTransitioning = !1, await this.checkTransitions();
     }
   }
 }
 export {
-  E as FSM,
+  f as FSM,
   c as TransitionStrategy
 };
