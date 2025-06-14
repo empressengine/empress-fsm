@@ -1,3 +1,5 @@
+![Empress Logo](https://empressengine.github.io/empress-documentation/assets/images/empress_logo_big_fsm-5d73b41dab10e209faaa578b5d4c3273.png)
+
 # Empress FSM
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)]()
@@ -98,8 +100,8 @@ const gameFSM = new FSM(executionController, {
 // Запускаем FSM
 await gameFSM.start();
 
-// Обновляем состояние
-gameFSM.update(state => ({
+// Обновляем состояние, дожидаясь выполнения всех Групп Систем в текущем состоянии
+await gameFSM.update(state => ({
   score: state.score - 10
 }));
 ```
