@@ -3,6 +3,15 @@ import { Store } from 'empress-store';
 import { StateLifecycle, TransitionConfig, TransitionStrategy, TransitionContext } from './types';
 
 /**
+ * Интерфейс, описывающий состояние Store на момент перехода или выхода из стейта.
+ * @template T - Тип данных состояния
+ */
+export interface IStoreState<T extends object> {
+    current: T;
+    prev: T;
+}
+
+/**
  * Интерфейс, описывающий данные жизненного цикла состояния.
  * @template T - Тип данных состояния
  */
@@ -10,7 +19,7 @@ export interface IStateLifeCycleData<T extends object> {
     fsmName: string,
     from: string,
     to: string,
-    data: T
+    data: IStoreState<T>
 }
 
 /**
