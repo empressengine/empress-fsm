@@ -60,12 +60,10 @@ export declare class FSM<T extends object> implements IFSM<T> {
     private _store;
     private _states;
     private _currentState;
-    private _currentEnterExecutionId;
-    private _currentExitExecutionId;
-    private _isTransitioning;
-    private _isExecutingLifecycle;
-    private _pendingUpdates;
-    private _lastStateCopy;
+    private _currentStateData;
+    private _currentExecutionId;
+    private _storeStates;
+    private _transitionPromise;
     private _hooks?;
     /**
      * @description
@@ -90,60 +88,35 @@ export declare class FSM<T extends object> implements IFSM<T> {
     start(): Promise<void>;
     /**
      * @description
-     * Обновляет состояние Store.
-     * После обновления проверяются все возможные переходы.
-     *
-     * @param callback - Функция обновления состояния
-     */
-    update(callback: (state: T) => Partial<T>): void;
-    /**
-     * @description
-     * Останавливает конечный автомат.
+     * Останавливает конечный автомат и останавливает текущее выполнение.
      * Вызывает onExit для текущего состояния, останавливает подсостояния и отписывается от Store.
      */
     stop(): Promise<void>;
     /**
      * @description
-     * Создает метод состояния для выполнения входа/выхода.
+     * Обновляет состояние Store.
+     * После обновления проверяются все возможные переходы.
      *
-     * @param state - Имя состояния
-     * @param from - Исходное состояние
-     * @param to - Целевое состояние
-     * @param method - Метод ('onEnter' или 'onExit')
-     * @param stateCopy - Копия данных состояния
-     * @returns ID выполнения или undefined
+     * @param callback - Функция обновления состояния
      */
-    private createStateMethod;
+    update(callback: (state: T) => Partial<T>): Promise<void>;
     /**
      * @description
-     * Получает стратегию перехода для состояния.
-     * Если стратегия не указана, используется Wait.
-     *
-     * @param state - Конфигурация состояния
-     * @param to - Целевое состояние
-     * @returns Стратегия перехода (Stop или Wait)
+     * Ожидает завершения текущего перехода.
      */
-    private getTransitionStrategy;
+    waitForTransition(): Promise<void>;
+    private addStoreData;
+    private getStoreData;
+    private canTransit;
     /**
      * @description
-     * Применяет отложенные обновления состояния.
-     * Используется при режиме Wait для обработки накопленных обновлений.
+     * Обрабатывает переход между состояниями.
+     * Проверяет возможность перехода и запускает переход, если он возможен.
      */
-    private applyPendingUpdates;
-    /**
-     * @description
-     * Проверяет возможные переходы из текущего состояния.
-     * Если условие перехода выполняется, осуществляет переход в новое состояние.
-     */
-    private checkTransitions;
-    /**
-     * @description
-     * Осуществляет переход в новое состояние.
-     * Выполняет выход из текущего состояния и вход в новое.
-     *
-     * @param newStateName - Имя нового состояния
-     */
+    private processTransition;
     private transition;
+    private processOnExit;
+    private processOnEnter;
 }
 
 /**
@@ -220,7 +193,16 @@ export declare interface IStateLifeCycleData<T extends object> {
     fsmName: string;
     from: string;
     to: string;
-    data: T;
+    data: IStoreState<T>;
+}
+
+/**
+ * Интерфейс, описывающий состояние Store на момент перехода или выхода из стейта.
+ * @template T - Тип данных состояния
+ */
+export declare interface IStoreState<T extends object> {
+    current: T;
+    prev: T;
 }
 
 /**

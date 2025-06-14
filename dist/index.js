@@ -1,6 +1,6 @@
-import { Utils as h } from "empress-core";
-var c = /* @__PURE__ */ ((o) => (o.Stop = "stop", o.Wait = "wait", o))(c || {});
-class f {
+import { DeferredPromise as h } from "empress-core";
+var c = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(c || {});
+class _ {
   /**
    * @description
    * Создает новый экземпляр конечного автомата.
@@ -13,22 +13,11 @@ class f {
    * @param config.states - Массив состояний
    * @param config.hooks - Глобальные хуки (опционально)
    */
-  constructor(t, e) {
-    this._executionController = t, this._currentEnterExecutionId = null, this._currentExitExecutionId = null, this._isTransitioning = !1, this._isExecutingLifecycle = !1, this._pendingUpdates = [], this._name = e.name, this._store = e.store, this._states = /* @__PURE__ */ new Map(), this._hooks = e.hooks, this._currentState = e.initialState, e.states.forEach((s) => {
-      this._states.set(s.name, s);
-    }), this._store.subscribe(async (s) => {
-      const i = () => this._store.cloneState(), n = this._states.get(this._currentState);
-      if (!(!n || !n.transitions || this._isTransitioning)) {
-        if (this._isExecutingLifecycle) {
-          if (this.getTransitionStrategy(n, "") === c.Stop && this._currentEnterExecutionId) {
-            this._executionController.stop(this._currentEnterExecutionId), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.checkTransitions();
-            return;
-          }
-          this._pendingUpdates.push(i);
-          return;
-        }
-        await this.checkTransitions();
-      }
+  constructor(t, s) {
+    this._executionController = t, this._currentExecutionId = "", this._storeStates = [], this._transitionPromise = null, this._name = s.name, this._store = s.store, this._states = /* @__PURE__ */ new Map(), this._hooks = s.hooks, this._currentState = s.initialState, s.states.forEach((e) => {
+      this._states.set(e.name, e);
+    }), this._store.subscribe(async () => {
+      this.addStoreData(this._store), this.processTransition();
     });
   }
   /**
@@ -80,19 +69,23 @@ class f {
    * @throws Error если начальное состояние не найдено
    */
   async start() {
+    var e;
     const t = this._states.get(this._currentState);
-    if (!t)
-      throw new Error(`Initial state '${this._currentState}' not found`);
-    const e = h.createProxyDecorator(this._store.cloneState());
-    this._lastStateCopy = e;
-    const s = this.createStateMethod(this._currentState, "", this._currentState, "onEnter", e);
-    if (s)
-      try {
-        this._currentEnterExecutionId = s, this._isExecutingLifecycle = !0, await this._executionController.run(s);
-      } finally {
-        this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.applyPendingUpdates();
-      }
-    t.subStates && await t.subStates.start();
+    if (!t) throw new Error(`Initial state '${this._currentState}' not found`);
+    this.addStoreData(this._store), this._transitionPromise = new h();
+    const s = this.getStoreData();
+    s && (await this.processOnEnter(this._currentState, "", s), t.subStates && await t.subStates.start(), this._currentStateData = s, (e = this._transitionPromise) == null || e.resolve(), await this.processTransition());
+  }
+  /**
+   * @description
+   * Останавливает конечный автомат и останавливает текущее выполнение.
+   * Вызывает onExit для текущего состояния, останавливает подсостояния и отписывается от Store.
+   */
+  async stop() {
+    var s;
+    const t = this._states.get(this._currentState);
+    t && (this._executionController.stop(this._currentExecutionId), (s = this._transitionPromise) == null || s.resolve(), this.processOnExit(this._currentState, this._currentStateData), t.subStates && await t.subStates.stop(), this._store.subscribe(() => {
+    }));
   }
   /**
    * @description
@@ -101,116 +94,70 @@ class f {
    * 
    * @param callback - Функция обновления состояния
    */
-  update(t) {
-    this._store.update(t);
+  async update(t) {
+    var e;
+    const s = this._states.get(this._currentState);
+    (s == null ? void 0 : s.transitionStrategy) === c.Stop && this._executionController.stop(this._currentExecutionId), await ((e = this._transitionPromise) == null ? void 0 : e.promise), this._store.update(t);
   }
   /**
    * @description
-   * Останавливает конечный автомат.
-   * Вызывает onExit для текущего состояния, останавливает подсостояния и отписывается от Store.
+   * Ожидает завершения текущего перехода.
    */
-  async stop() {
-    const t = this._states.get(this._currentState);
-    if (!t) return;
-    const e = this.createStateMethod(this._currentState, this._currentState, "", "onExit", this._lastStateCopy);
-    e && await this._executionController.run(e), t.subStates && await t.subStates.stop(), this._store.subscribe(() => {
+  async waitForTransition() {
+    var t;
+    await ((t = this._transitionPromise) == null ? void 0 : t.promise);
+  }
+  addStoreData(t) {
+    this._storeStates.push({
+      current: t.cloneState(),
+      prev: t.clonePrevState()
     });
   }
-  /**
-   * @description
-   * Создает метод состояния для выполнения входа/выхода.
-   * 
-   * @param state - Имя состояния
-   * @param from - Исходное состояние
-   * @param to - Целевое состояние
-   * @param method - Метод ('onEnter' или 'onExit')
-   * @param stateCopy - Копия данных состояния
-   * @returns ID выполнения или undefined
-   */
-  createStateMethod(t, e, s, i, n) {
-    var a;
+  getStoreData(t = !1) {
+    return t ? this._storeStates.pop() : this._storeStates.shift();
+  }
+  canTransit(t, s, e) {
     const r = this._states.get(t);
-    if (!r)
-      throw new Error(`State '${t}' not found`);
-    if (r[i]) {
-      const u = { fsmName: this._name, from: e, to: s, data: n }, _ = `[FSM][${i}] In ${this._name} from ${e} to ${s}`, l = this._executionController.create(r[i], u, _);
-      if ((a = this._hooks) != null && a[i]) {
-        const S = { fsmName: this._name, from: e, to: s, data: n };
-        this._hooks[i](S);
-      }
-      return l;
-    }
+    if (!r || !r.transitions) return null;
+    for (const i of r.transitions)
+      if (i.condition(s, e)) return i.to;
+    return null;
   }
   /**
    * @description
-   * Получает стратегию перехода для состояния.
-   * Если стратегия не указана, используется Wait.
-   * 
-   * @param state - Конфигурация состояния
-   * @param to - Целевое состояние
-   * @returns Стратегия перехода (Stop или Wait)
+   * Обрабатывает переход между состояниями.
+   * Проверяет возможность перехода и запускает переход, если он возможен.
    */
-  getTransitionStrategy(t, e) {
-    if (!t.transitionStrategy) return c.Wait;
-    if (typeof t.transitionStrategy == "function") {
-      const s = {
-        from: t.name,
-        to: e,
-        store: this._store
-      };
-      return t.transitionStrategy(s);
-    }
-    return t.transitionStrategy;
+  async processTransition() {
+    var e;
+    const t = this.getStoreData();
+    if (!t) return;
+    const s = this.canTransit(this._currentState, t.current, t.prev);
+    s && (this._transitionPromise = new h(), await this.transition(this._currentState, s, this._currentStateData, t), this._currentStateData = t, (e = this._transitionPromise) == null || e.resolve());
   }
-  /**
-   * @description
-   * Применяет отложенные обновления состояния.
-   * Используется при режиме Wait для обработки накопленных обновлений.
-   */
-  async applyPendingUpdates() {
-    for (; this._pendingUpdates.length > 0; )
-      this._pendingUpdates.shift(), await this.checkTransitions();
+  async transition(t, s, e, r) {
+    const i = this._states.get(t), n = this._states.get(s);
+    if (!i || !n) throw new Error(`State '${t}' or '${s}' not found`);
+    this.processOnExit(t, e), await this.processOnEnter(s, t, r), n.subStates && n.subStates.start();
   }
-  /**
-   * @description
-   * Проверяет возможные переходы из текущего состояния.
-   * Если условие перехода выполняется, осуществляет переход в новое состояние.
-   */
-  async checkTransitions() {
-    const t = this._states.get(this._currentState);
-    if (!(!t || !t.transitions || this._isTransitioning || this._isExecutingLifecycle)) {
-      for (const e of t.transitions)
-        if (e.condition(this._store.state, this._store.prev)) {
-          this.getTransitionStrategy(t, e.to) === c.Stop && this._currentEnterExecutionId && (this._executionController.stop(this._currentEnterExecutionId), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1), await this.transition(e.to);
-          break;
-        }
-    }
+  processOnExit(t, s) {
+    var o;
+    const e = this._states.get(t);
+    if (!e) throw new Error(`State '${t}' not found`);
+    if (!e.onExit) return;
+    const r = { fsmName: this._name, from: t, to: "", data: s }, i = `[FSM][onExit] In ${this._name} from ${t}}`, n = this._executionController.create(e.onExit, r, i);
+    (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(n, !1);
   }
-  /**
-   * @description
-   * Осуществляет переход в новое состояние.
-   * Выполняет выход из текущего состояния и вход в новое.
-   * 
-   * @param newStateName - Имя нового состояния
-   */
-  async transition(t) {
-    try {
-      this._isTransitioning = !0;
-      const e = this._states.get(this._currentState), s = this._states.get(t);
-      if (!e || !s)
-        throw new Error(`Invalid transition from '${this._currentState}' to '${t}'`);
-      const i = this._currentState, n = this.createStateMethod(i, i, "", "onExit", this._lastStateCopy);
-      n && (this._currentExitExecutionId = n, this._isExecutingLifecycle = !0, await this._executionController.run(n, !1), this._currentExitExecutionId = null, this._isExecutingLifecycle = !1, await this.applyPendingUpdates()), e.subStates && e.subStates.stop(), this._currentState = t;
-      const r = h.createProxyDecorator(this._store.cloneState());
-      this._lastStateCopy = r;
-      const a = this.createStateMethod(t, i, t, "onEnter", r);
-      a && (this._currentEnterExecutionId = a, this._isExecutingLifecycle = !0, await this._executionController.run(a), this._currentEnterExecutionId = null, this._isExecutingLifecycle = !1, await this.checkTransitions()), s.subStates && s.subStates.start();
-    } finally {
-      this._isTransitioning = !1, await this.checkTransitions();
-    }
+  async processOnEnter(t, s, e) {
+    var o;
+    const r = this._states.get(t);
+    if (!r) throw new Error(`State '${t}' not found`);
+    if (!r.onEnter) return;
+    const i = { fsmName: this._name, from: s, to: t, data: e }, n = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`;
+    this._currentExecutionId = this._executionController.create(r.onEnter, i, n), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(i), await this._executionController.run(this._currentExecutionId);
   }
 }
 export {
-  f as FSM,
+  _ as FSM,
   c as TransitionStrategy
 };
