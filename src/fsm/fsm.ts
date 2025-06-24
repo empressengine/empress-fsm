@@ -1,5 +1,5 @@
 import { DeferredPromise, ExecutionController } from 'empress-core';
-import { Store } from 'empress-store';
+import { IStoreAdapter } from 'store-adapter';
 import { 
     IFSM, 
     IFSMConfig, 
@@ -38,11 +38,26 @@ export class FSM<T extends object> implements IFSM<T> {
     
     /**
      * @description
+     * Получает StoreAdapter, связанный с конечным автоматом.
+     * StoreAdapter содержит данные, которые влияют на переходы между состояниями.
+     */
+    public get storeAdapter(): IStoreAdapter<T> {
+        return this._storeAdapter;
+    }
+
+    /**
+     * @description
      * Получает Store, связанный с конечным автоматом.
      * Store содержит данные, которые влияют на переходы между состояниями.
+     * @deprecated Используйте storeAdapter вместо store.
      */
-    public get store(): Store<T> {
-        return this._store;
+    public get store(): any {
+        console.warn('FSM.store is deprecated. Use FSM.storeAdapter instead.');
+        return {
+            cloneState: () => this._storeAdapter.getState(),
+            clonePrevState: () => this._storeAdapter.getPrevState(),
+            update: (callback: (state: T) => Partial<T>) => this._storeAdapter.update(callback)
+        };
     }
 
     /**
@@ -74,7 +89,7 @@ export class FSM<T extends object> implements IFSM<T> {
     }
 
     private _name: string;
-    private _store: Store<T>;
+    private _storeAdapter!: IStoreAdapter<T>;
     private _states: Map<string, IStateConfig<T>>;
     private _currentState: string;
     private _currentStateData!: IStoreState<T>;
@@ -105,7 +120,7 @@ export class FSM<T extends object> implements IFSM<T> {
         config: IFSMConfig<T>,
     ) {
         this._name = config.name;
-        this._store = config.store;
+        this._storeAdapter = config.store;
         this._states = new Map();
         this._hooks = config.hooks;
         this._currentState = config.initialState;
@@ -114,8 +129,8 @@ export class FSM<T extends object> implements IFSM<T> {
             this._states.set(state.name, state);
         });
 
-        this._store.subscribe(async () => {
-            this.addStoreData(this._store);
+        this._storeAdapter.subscribe(async () => {
+            this.addStoreData(this._storeAdapter);
             this.processTransition();
         });
     }
@@ -131,7 +146,7 @@ export class FSM<T extends object> implements IFSM<T> {
         const initialState = this._states.get(this._currentState);
         if (!initialState) throw new Error(`Initial state '${this._currentState}' not found`);
 
-        this.addStoreData(this._store);
+        this.addStoreData(this._storeAdapter);
         this._transitionPromise = new DeferredPromise<void>();
 
         const data = this.getStoreData();
@@ -160,7 +175,7 @@ export class FSM<T extends object> implements IFSM<T> {
         this.processOnExit(this._currentState, this._currentStateData);
 
         currentState.subStates && await currentState.subStates.stop();
-        this._store.subscribe(() => {});
+        this._storeAdapter.unsubscribe()
     }
 
     /**
@@ -178,7 +193,7 @@ export class FSM<T extends object> implements IFSM<T> {
         }
 
         await this._transitionPromise?.promise;
-        this._store.update(callback);
+        this._storeAdapter.update(callback);
     }
 
     /**
@@ -189,10 +204,10 @@ export class FSM<T extends object> implements IFSM<T> {
         await this._transitionPromise?.promise;
     }
 
-    private addStoreData(store: Store<T>) {
+    private addStoreData(store: IStoreAdapter<T>) {
         this._storeStates.push({
-            current: store.cloneState(),
-            prev: store.clonePrevState()
+            current: store.getState(),
+            prev: store.getPrevState()
         });
     }
 

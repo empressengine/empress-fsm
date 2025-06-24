@@ -15,12 +15,14 @@ Empress FSM - это конечный автомат, разработанный
   - [Инициализация](#инициализация)
   - [Выполнение](#выполнение)
 - [Пример использования](#пример-использования)
+- [Использование с другими Store](#использование-с-другими-store)
 - [Лицензия](#лицензия)
 
 
 ## Особенности
 
 - Интеграция с Empress Store для управления данными
+- Возможность подключения к любому Store (включая Redux, Zustand, Pinia, etc), через IStoreAdapter
 - Интеграция с Empress Core для выполнения SystemGroup в стейтах
 - Выполнение Групп Систем в порядке их добавления
 - Два режима перехода между состояниями:
@@ -42,7 +44,7 @@ npm install empress-fsm empress-store empress-core
 ## Принцип работы
 
 1. **Инициализация**
-   - Создание Store для хранения данных
+   - Создание StoreAdapter через StoreFactory
    - Определение состояний и их переходов
    - Настройка Групп Систем для каждого состояния
 
@@ -55,7 +57,7 @@ npm install empress-fsm empress-store empress-core
 
 ```typescript
 import { FSM } from 'empress-fsm';
-import { Store } from 'empress-store';
+import { EmpressStoreFactory } from 'empress-fsm/factory';
 import { ExecutionController } from 'empress-core';
 
 // Определяем интерфейс данных
@@ -64,8 +66,8 @@ interface GameState {
   level: number;
 }
 
-// Создаем Store
-const store = new Store<GameState>({
+// Создаем StoreAdapter через Factory
+const store = new EmpressStoreFactory().create<GameState>({
   score: 0,
   level: 1
 });
@@ -76,7 +78,7 @@ const executionController = new ExecutionController();
 // Настраиваем FSM
 const gameFSM = new FSM(executionController, {
   name: 'game',
-  store,
+  storeAdapter: store,
   initialState: 'playing',
   states: [
     {
@@ -104,6 +106,83 @@ await gameFSM.start();
 await gameFSM.update(state => ({
   score: state.score - 10
 }));
+```
+
+## Использование с другими Store
+
+Для использования Empress FSM с другими Store, вам нужно создать StoreAdapter, реализующий интерфейс IStoreAdapter.
+
+```typescript
+import { IStoreAdapter } from 'empress-fsm/store-adapter';
+
+class CustomStoreAdapter implements IStoreAdapter {
+  getState(): any {
+    // Получение состояния
+  }
+
+  getPrevState(): any {
+    // Получение предыдущего состояния
+  }
+
+  update(updater: (state: any) => Partial<any>): void {
+    // Обновление состояния
+  }
+
+  subscribe(listener: (state: any, prev: any) => void): () => void {
+    // Подписка на изменения
+    return () => {};
+  }
+
+  unsubscribe(): void {
+    // Отписка от изменений
+  }
+}
+```
+
+Далее при необходимости создайте StoreFactory, реализующий интерфейс IStoreFactory.
+
+```typescript
+import { IStoreFactory } from 'empress-fsm/factory/models';
+
+class CustomStoreFactory implements IStoreFactory {
+  create<T extends object>(initialState: T): IStoreAdapter<T> {
+    // Создание StoreAdapter
+    return new CustomStoreAdapter();
+  }
+}
+```
+
+Подключите StoreFactory к FSM:
+
+```typescript
+// Создаем StoreAdapter через Factory
+const store = new CustomStoreFactory().create<GameState>({
+  score: 0,
+  level: 1
+});
+
+const fsm = new FSM(executionController, {
+  name: 'game',
+  storeAdapter: store,
+  initialState: 'playing',
+  states: [
+    {
+      name: 'playing',
+      onEnter: [PlayingOnEnterGroup],
+      transitionStrategy: TransitionStrategy.Stop,
+      transitions: [
+        {
+          to: 'gameOver',
+          condition: (store) => store.getState().score < 0
+        }
+      ],
+    },
+    {
+      name: 'gameOver',
+      onEnter: [GameOverOnEnterGroup],
+    }
+  ]
+});
 ```
 
 ## Лицензия
