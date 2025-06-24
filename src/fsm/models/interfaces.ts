@@ -1,6 +1,7 @@
 import { GroupType } from 'empress-core';
 import { Store } from 'empress-store';
 import { StateLifecycle, TransitionConfig, TransitionStrategy, TransitionContext } from './types';
+import { IStoreAdapter } from 'store-adapter';
 
 /**
  * Интерфейс, описывающий состояние Store на момент перехода или выхода из стейта.
@@ -28,7 +29,7 @@ export interface IStateLifeCycleData<T extends object> {
  */
 export interface IFSMConfig<T extends object> {
     name: string;
-    store: Store<T>;
+    store: IStoreAdapter<T>;
     initialState: string;
     states: IStateConfig<T>[];
     hooks?: {
@@ -73,7 +74,8 @@ export interface IHooksConfig<T extends object> {
  */
 export interface IFSM<T extends object> {
     name: string;
-    store: Store<T>;
+    store: any;
+    storeAdapter: IStoreAdapter<T>;
     currentState: string;
     states: Map<string, IStateConfig<T>>;
     hooks: IHooksConfig<T>;
