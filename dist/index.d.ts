@@ -8,6 +8,41 @@ import { Store } from 'empress-store';
  */
 export declare type Condition<T extends object> = (store: Store<T>) => boolean;
 
+export declare class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
+    private store;
+    private _unsubscribeFn;
+    constructor(store: Store<T>);
+    /**
+     * @description
+     * Получает текущее состояние Store.
+     */
+    getState(): T;
+    /**
+     * @description
+     * Получает предыдущее состояние Store.
+     */
+    getPrevState(): T;
+    /**
+     * @description
+     * Обновляет состояние Store.
+     */
+    update(updater: (state: T) => Partial<T>): void;
+    /**
+     * @description
+     * Подписывается на изменения Store.
+     */
+    subscribe(listener: (state: T, prev: T) => void): () => void;
+    /**
+     * @description
+     * Отписывается от Store.
+     */
+    unsubscribe(): void;
+}
+
+export declare class EmpressStoreFactory implements IStoreFactory {
+    create<T extends object>(initialState: T): IStoreAdapter<T>;
+}
+
 /**
  * @description
  * Конечный автомат (Finite State Machine), управляемый данными для Empress.
@@ -33,10 +68,17 @@ export declare class FSM<T extends object> implements IFSM<T> {
     get name(): string;
     /**
      * @description
+     * Получает StoreAdapter, связанный с конечным автоматом.
+     * StoreAdapter содержит данные, которые влияют на переходы между состояниями.
+     */
+    get storeAdapter(): IStoreAdapter_2<T>;
+    /**
+     * @description
      * Получает Store, связанный с конечным автоматом.
      * Store содержит данные, которые влияют на переходы между состояниями.
+     * @deprecated Используйте storeAdapter вместо store.
      */
-    get store(): Store<T>;
+    get store(): any;
     /**
      * @description
      * Получает текущее состояние конечного автомата.
@@ -57,7 +99,7 @@ export declare class FSM<T extends object> implements IFSM<T> {
      */
     get hooks(): IHooksConfig<T>;
     private _name;
-    private _store;
+    private _storeAdapter;
     private _states;
     private _currentState;
     private _currentStateData;
@@ -131,7 +173,8 @@ export declare type FSMState<T extends object> = IStateConfig<T>;
  */
 export declare interface IFSM<T extends object> {
     name: string;
-    store: Store<T>;
+    store: any;
+    storeAdapter: IStoreAdapter_2<T>;
     currentState: string;
     states: Map<string, IStateConfig<T>>;
     hooks: IHooksConfig<T>;
@@ -146,7 +189,7 @@ export declare interface IFSM<T extends object> {
  */
 export declare interface IFSMConfig<T extends object> {
     name: string;
-    store: Store<T>;
+    store: IStoreAdapter_2<T>;
     initialState: string;
     states: IStateConfig<T>[];
     hooks?: {
@@ -194,6 +237,26 @@ export declare interface IStateLifeCycleData<T extends object> {
     from: string;
     to: string;
     data: IStoreState<T>;
+}
+
+export declare interface IStoreAdapter<T extends object> {
+    getState(): T;
+    getPrevState(): T;
+    update(updater: (state: T) => Partial<T>): void;
+    subscribe(listener: (state: T, prev: T) => void): () => void;
+    unsubscribe(): void;
+}
+
+declare interface IStoreAdapter_2<T extends object> {
+    getState(): T;
+    getPrevState(): T;
+    update(updater: (state: T) => Partial<T>): void;
+    subscribe(listener: (state: T, prev: T) => void): () => void;
+    unsubscribe(): void;
+}
+
+export declare interface IStoreFactory {
+    create<T extends object>(initialState: T): IStoreAdapter<T>;
 }
 
 /**
