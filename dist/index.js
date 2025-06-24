@@ -172,36 +172,39 @@ class d {
 }
 class _ {
   constructor(t) {
-    this.store = t, this._unsubscribeFn = () => {
+    this._store = t, this._unsubscribeFn = () => {
     };
+  }
+  get store() {
+    return this._store;
   }
   /**
    * @description
    * Получает текущее состояние Store.
    */
   getState() {
-    return this.store.cloneState();
+    return this._store.cloneState();
   }
   /**
    * @description
    * Получает предыдущее состояние Store.
    */
   getPrevState() {
-    return this.store.clonePrevState();
+    return this._store.clonePrevState();
   }
   /**
    * @description
    * Обновляет состояние Store.
    */
   update(t) {
-    this.store.update(t);
+    this._store.update(t);
   }
   /**
    * @description
    * Подписывается на изменения Store.
    */
   subscribe(t) {
-    return this._unsubscribeFn = this.store.subscribe(t), this._unsubscribeFn;
+    return this._unsubscribeFn = this._store.subscribe(t), this._unsubscribeFn;
   }
   /**
    * @description
