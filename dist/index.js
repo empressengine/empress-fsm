@@ -175,9 +175,6 @@ class _ {
     this._store = t, this._unsubscribeFn = () => {
     };
   }
-  get store() {
-    return this._store;
-  }
   /**
    * @description
    * Получает текущее состояние Store.

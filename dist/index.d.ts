@@ -8,9 +8,8 @@ import { Store } from 'empress-store';
  */
 export declare type Condition<T extends object> = (store: Store<T>) => boolean;
 
-export declare class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T, Store<T>> {
+export declare class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
     private _store;
-    get store(): Store<T>;
     private _unsubscribeFn;
     constructor(_store: Store<T>);
     /**
@@ -240,8 +239,7 @@ export declare interface IStateLifeCycleData<T extends object> {
     data: IStoreState<T>;
 }
 
-export declare interface IStoreAdapter<T extends object, K = any> {
-    store: K;
+export declare interface IStoreAdapter<T extends object> {
     getState(): T;
     getPrevState(): T;
     update(updater: (state: T) => Partial<T>): void;
@@ -249,8 +247,7 @@ export declare interface IStoreAdapter<T extends object, K = any> {
     unsubscribe(): void;
 }
 
-declare interface IStoreAdapter_2<T extends object, K = any> {
-    store: K;
+declare interface IStoreAdapter_2<T extends object> {
     getState(): T;
     getPrevState(): T;
     update(updater: (state: T) => Partial<T>): void;
