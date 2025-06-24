@@ -1,4 +1,5 @@
-export interface IStoreAdapter<T extends object> {
+export interface IStoreAdapter<T extends object, K = any> {
+    store: K;
     getState(): T;
     getPrevState(): T;
     update(updater: (state: T) => Partial<T>): void;

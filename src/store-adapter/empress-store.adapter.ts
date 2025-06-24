@@ -1,18 +1,22 @@
 import { Store } from "empress-store";
 import { IStoreAdapter } from "./models";
 
-export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
+export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T, Store<T>> {
+
+    public get store(): Store<T> {
+        return this._store;
+    }
 
     private _unsubscribeFn: () => void = () => {};
 
-    constructor(private store: Store<T>) {}
+    constructor(private _store: Store<T>) {}
     
     /**
      * @description
      * Получает текущее состояние Store.
      */
     public getState(): T {
-      return this.store.cloneState();
+      return this._store.cloneState();
     }
     
     /**
@@ -20,7 +24,7 @@ export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
      * Получает предыдущее состояние Store.
      */
     public getPrevState(): T {
-      return this.store.clonePrevState();
+      return this._store.clonePrevState();
     }
     
     /**
@@ -28,7 +32,7 @@ export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
      * Обновляет состояние Store.
      */
     public update(updater: (state: T) => Partial<T>): void {
-      this.store.update(updater);
+      this._store.update(updater);
     }
     
     /**
@@ -36,7 +40,7 @@ export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
      * Подписывается на изменения Store.
      */
     public subscribe(listener: (state: T, prev: T) => void): () => void {
-      this._unsubscribeFn = this.store.subscribe(listener);
+      this._unsubscribeFn = this._store.subscribe(listener);
       return this._unsubscribeFn;
     }
     
