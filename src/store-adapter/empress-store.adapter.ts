@@ -2,7 +2,11 @@ import { Store } from "empress-store";
 import { IStoreAdapter } from "./models";
 
 export class EmpressStoreAdapter<T extends object> implements IStoreAdapter<T> {
-  
+
+    public get store(): Store<T> {
+      return this._store;
+    }
+
     private _unsubscribeFn: () => void = () => {};
 
     constructor(private _store: Store<T>) {}
