@@ -1,5 +1,4 @@
 import { GroupType } from 'empress-core';
-import { Store } from 'empress-store';
 import { StateLifecycle, TransitionConfig, TransitionStrategy, TransitionContext } from './types';
 import { IStoreAdapter } from 'store-adapter';
 
