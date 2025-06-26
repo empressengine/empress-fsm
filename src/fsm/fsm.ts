@@ -96,6 +96,7 @@ export class FSM<T extends object> implements IFSM<T> {
     private _currentExecutionId: string = '';
     private _storeStates: IStoreState<T>[] = [];
     private _transitionPromise: DeferredPromise<void> | null = null;
+    private _isRunning: boolean = false;
 
 
     private _hooks?: {
@@ -130,8 +131,10 @@ export class FSM<T extends object> implements IFSM<T> {
         });
 
         this._storeAdapter.subscribe(async () => {
-            this.addStoreData(this._storeAdapter);
-            this.processTransition();
+            if(this._isRunning) {
+                this.addStoreData(this._storeAdapter);
+                this.processTransition();
+            }
         });
     }
 
@@ -143,6 +146,7 @@ export class FSM<T extends object> implements IFSM<T> {
      * @throws Error если начальное состояние не найдено
      */
     public async start(): Promise<void> {
+        this._isRunning = true;
         const initialState = this._states.get(this._currentState);
         if (!initialState) throw new Error(`Initial state '${this._currentState}' not found`);
 
@@ -167,6 +171,7 @@ export class FSM<T extends object> implements IFSM<T> {
      * Вызывает onExit для текущего состояния, останавливает подсостояния и отписывается от Store.
      */
     public async stop(): Promise<void> {
+        this._isRunning = false;
         const currentState = this._states.get(this._currentState);
         if (!currentState) return;
 
@@ -186,6 +191,7 @@ export class FSM<T extends object> implements IFSM<T> {
      * @param callback - Функция обновления состояния
      */
     public async update(callback: (state: T) => Partial<T>): Promise<void> {
+        if(!this._isRunning) return;
         const stateConfig = this._states.get(this._currentState);
 
         if(stateConfig?.transitionStrategy === TransitionStrategy.Stop) {
@@ -212,10 +218,12 @@ export class FSM<T extends object> implements IFSM<T> {
     }
 
     private getStoreData(last: boolean = false): IStoreState<T> | undefined {
-        return last ? this._storeStates.pop() : this._storeStates.shift();
+        const data = last ? this._storeStates.pop() : this._storeStates.shift();
+        return data;
     }
    
     private canTransit(currentStateName: string, current: T, prev: T): string | null {
+        if(!this._isRunning) return null;
         const currentState = this._states.get(currentStateName);
         if (!currentState || !currentState.transitions) return null;
 
@@ -233,6 +241,7 @@ export class FSM<T extends object> implements IFSM<T> {
      * Проверяет возможность перехода и запускает переход, если он возможен.
      */
     private async processTransition(): Promise<void> {
+        if(!this._isRunning) return;
         const data = this.getStoreData();
         if(!data) return;
 
