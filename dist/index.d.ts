@@ -107,6 +107,7 @@ export declare class FSM<T extends object> implements IFSM<T> {
     private _currentExecutionId;
     private _storeStates;
     private _transitionPromise;
+    private _isRunning;
     private _hooks?;
     /**
      * @description

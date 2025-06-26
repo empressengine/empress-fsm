@@ -1,6 +1,6 @@
 import { DeferredPromise as h } from "empress-core";
-import { Store as u } from "empress-store";
-var c = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(c || {});
+import { Store as c } from "empress-store";
+var u = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(u || {});
 class d {
   /**
    * @description
@@ -15,10 +15,10 @@ class d {
    * @param config.hooks - Глобальные хуки (опционально)
    */
   constructor(t, s) {
-    this._executionController = t, this._currentExecutionId = "", this._storeStates = [], this._transitionPromise = null, this._name = s.name, this._storeAdapter = s.store, this._states = /* @__PURE__ */ new Map(), this._hooks = s.hooks, this._currentState = s.initialState, s.states.forEach((e) => {
+    this._executionController = t, this._currentExecutionId = "", this._storeStates = [], this._transitionPromise = null, this._isRunning = !1, this._name = s.name, this._storeAdapter = s.store, this._states = /* @__PURE__ */ new Map(), this._hooks = s.hooks, this._currentState = s.initialState, s.states.forEach((e) => {
       this._states.set(e.name, e);
     }), this._storeAdapter.subscribe(async () => {
-      this.addStoreData(this._storeAdapter), this.processTransition();
+      this._isRunning && (this.addStoreData(this._storeAdapter), this.processTransition());
     });
   }
   /**
@@ -84,6 +84,7 @@ class d {
    */
   async start() {
     var e;
+    this._isRunning = !0;
     const t = this._states.get(this._currentState);
     if (!t) throw new Error(`Initial state '${this._currentState}' not found`);
     this.addStoreData(this._storeAdapter), this._transitionPromise = new h();
@@ -97,6 +98,7 @@ class d {
    */
   async stop() {
     var s;
+    this._isRunning = !1;
     const t = this._states.get(this._currentState);
     t && (this._executionController.stop(this._currentExecutionId), (s = this._transitionPromise) == null || s.resolve(), this.processOnExit(this._currentState, this._currentStateData), t.subStates && await t.subStates.stop(), this._storeAdapter.unsubscribe());
   }
@@ -109,8 +111,9 @@ class d {
    */
   async update(t) {
     var e;
+    if (!this._isRunning) return;
     const s = this._states.get(this._currentState);
-    (s == null ? void 0 : s.transitionStrategy) === c.Stop && this._executionController.stop(this._currentExecutionId), await ((e = this._transitionPromise) == null ? void 0 : e.promise), this._storeAdapter.update(t);
+    (s == null ? void 0 : s.transitionStrategy) === u.Stop && this._executionController.stop(this._currentExecutionId), await ((e = this._transitionPromise) == null ? void 0 : e.promise), this._storeAdapter.update(t);
   }
   /**
    * @description
@@ -130,6 +133,7 @@ class d {
     return t ? this._storeStates.pop() : this._storeStates.shift();
   }
   canTransit(t, s, e) {
+    if (!this._isRunning) return null;
     const r = this._states.get(t);
     if (!r || !r.transitions) return null;
     for (const n of r.transitions)
@@ -143,6 +147,7 @@ class d {
    */
   async processTransition() {
     var e;
+    if (!this._isRunning) return;
     const t = this.getStoreData();
     if (!t) return;
     const s = this.canTransit(this._currentState, t.current, t.prev);
@@ -216,7 +221,7 @@ class _ {
 }
 class l {
   create(t) {
-    const s = new u(t);
+    const s = new c(t);
     return new _(s);
   }
 }
@@ -224,5 +229,5 @@ export {
   _ as EmpressStoreAdapter,
   l as EmpressStoreFactory,
   d as FSM,
-  c as TransitionStrategy
+  u as TransitionStrategy
 };
