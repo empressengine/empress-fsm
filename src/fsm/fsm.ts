@@ -19,8 +19,9 @@ import {
     TransitionStrategy 
 } from './models';
 
-import { WrapperGroup } from './wrapper.group';
 import { IStoreAdapter } from 'store-adapter';
+import { WrapperGroup } from './wrapper-group';
+import { WrapperChain } from './wrapper-chain';
 
 /**
  * @description
@@ -320,7 +321,7 @@ export class FSM<T extends object> implements IFSM<T> {
         data: IStateLifeCycleData<T>
     ): GroupType<IStateLifeCycleData<T>>[] {
         if(typeof groups === 'function') {
-            const chain = new SystemChain();
+            const chain = new WrapperChain();
             groups(chain, data);
 
             const wrapper: SystemGroup<IStateLifeCycleData<T>> = new WrapperGroup(chain);
