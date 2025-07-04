@@ -1,6 +1,7 @@
 import { ExecutionController } from 'empress-core';
 import { GroupType } from 'empress-core';
 import { Store } from 'empress-store';
+import { SystemChain } from 'empress-core';
 
 /**
  * Тип функции-условия перехода.
@@ -161,6 +162,7 @@ export declare class FSM<T extends object> implements IFSM<T> {
     private transition;
     private processOnExit;
     private processOnEnter;
+    private extractGroups;
 }
 
 /**
@@ -217,8 +219,8 @@ export declare interface IStateConfig<T extends object> {
     name: string;
     transitions?: TransitionConfig<T>[];
     subStates?: IFSM<any>;
-    onEnter?: GroupType<IStateLifeCycleData<T>>[];
-    onExit?: GroupType<IStateLifeCycleData<T>>[];
+    onEnter?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
+    onExit?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
     /**
      * Strategy for handling transitions during state execution.
      * - Stop: Immediately stops current state execution when transitioning

@@ -1,7 +1,14 @@
-import { DeferredPromise as h } from "empress-core";
-import { Store as c } from "empress-store";
-var u = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(u || {});
-class d {
+import { SystemGroup as p, DeferredPromise as c, SystemChain as S, ServiceContainer as d, GroupsContainer as l } from "empress-core";
+import { Store as f } from "empress-store";
+var _ = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(_ || {});
+class u extends p {
+  constructor(t) {
+    super(), this.chain = t;
+  }
+  setup(t, s) {
+  }
+}
+class w {
   /**
    * @description
    * Создает новый экземпляр конечного автомата.
@@ -87,7 +94,7 @@ class d {
     this._isRunning = !0;
     const t = this._states.get(this._currentState);
     if (!t) throw new Error(`Initial state '${this._currentState}' not found`);
-    this.addStoreData(this._storeAdapter), this._transitionPromise = new h();
+    this.addStoreData(this._storeAdapter), this._transitionPromise = new c();
     const s = this.getStoreData();
     s && (await this.processOnEnter(this._currentState, "", s), t.subStates && await t.subStates.start(), this._currentStateData = s, (e = this._transitionPromise) == null || e.resolve(), await this.processTransition());
   }
@@ -113,7 +120,7 @@ class d {
     var e;
     if (!this._isRunning) return;
     const s = this._states.get(this._currentState);
-    (s == null ? void 0 : s.transitionStrategy) === u.Stop && this._executionController.stop(this._currentExecutionId), await ((e = this._transitionPromise) == null ? void 0 : e.promise), this._storeAdapter.update(t);
+    (s == null ? void 0 : s.transitionStrategy) === _.Stop && this._executionController.stop(this._currentExecutionId), await ((e = this._transitionPromise) == null ? void 0 : e.promise), this._storeAdapter.update(t);
   }
   /**
    * @description
@@ -151,7 +158,7 @@ class d {
     const t = this.getStoreData();
     if (!t) return;
     const s = this.canTransit(this._currentState, t.current, t.prev);
-    s && (this._transitionPromise = new h(), await this.transition(this._currentState, s, this._currentStateData, t), this._currentStateData = t, (e = this._transitionPromise) == null || e.resolve());
+    s && (this._transitionPromise = new c(), await this.transition(this._currentState, s, this._currentStateData, t), this._currentStateData = t, (e = this._transitionPromise) == null || e.resolve());
   }
   async transition(t, s, e, r) {
     const n = this._states.get(t), i = this._states.get(s);
@@ -163,19 +170,28 @@ class d {
     const e = this._states.get(t);
     if (!e) throw new Error(`State '${t}' not found`);
     if (!e.onExit) return;
-    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, i = this._executionController.create(e.onExit, r, n);
-    (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(i, !1);
+    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, i = this.extractGroups(e.onExit, r), h = this._executionController.create(i, r, n);
+    (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(h, !1);
   }
   async processOnEnter(t, s, e) {
     var o;
     const r = this._states.get(t);
     if (!r) throw new Error(`State '${t}' not found`);
     if (!r.onEnter) return;
-    const n = { fsmName: this._name, from: s, to: t, data: e }, i = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`;
-    this._currentExecutionId = this._executionController.create(r.onEnter, n, i), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
+    const n = { fsmName: this._name, from: s, to: t, data: e }, i = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`, h = this.extractGroups(r.onEnter, n);
+    this._currentExecutionId = this._executionController.create(h, n, i), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
+  }
+  extractGroups(t, s) {
+    if (typeof t == "function") {
+      const e = new S();
+      t(e, s);
+      const r = new u(e);
+      return d.instance.get(l).set(u, r), [u];
+    } else
+      return t;
   }
 }
-class _ {
+class g {
   constructor(t) {
     this._store = t, this._unsubscribeFn = () => {
     };
@@ -219,15 +235,15 @@ class _ {
     this._unsubscribeFn();
   }
 }
-class l {
+class x {
   create(t) {
-    const s = new c(t);
-    return new _(s);
+    const s = new f(t);
+    return new g(s);
   }
 }
 export {
-  _ as EmpressStoreAdapter,
-  l as EmpressStoreFactory,
-  d as FSM,
-  u as TransitionStrategy
+  g as EmpressStoreAdapter,
+  x as EmpressStoreFactory,
+  w as FSM,
+  _ as TransitionStrategy
 };
