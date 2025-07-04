@@ -1,6 +1,6 @@
-import { SystemGroup as p, DeferredPromise as c, SystemChain as S, ServiceContainer as d, GroupsContainer as l } from "empress-core";
+import { SystemGroup as p, SystemChain as S, DeferredPromise as c, ServiceContainer as d, GroupsContainer as l } from "empress-core";
 import { Store as f } from "empress-store";
-var _ = /* @__PURE__ */ ((a) => (a.Stop = "stop", a.Wait = "wait", a))(_ || {});
+var _ = /* @__PURE__ */ ((i) => (i.Stop = "stop", i.Wait = "wait", i))(_ || {});
 class u extends p {
   constructor(t) {
     super(), this.chain = t;
@@ -8,7 +8,11 @@ class u extends p {
   setup(t, s) {
   }
 }
-class w {
+class g extends S {
+  clear() {
+  }
+}
+class x {
   /**
    * @description
    * Создает новый экземпляр конечного автомата.
@@ -161,16 +165,16 @@ class w {
     s && (this._transitionPromise = new c(), await this.transition(this._currentState, s, this._currentStateData, t), this._currentStateData = t, (e = this._transitionPromise) == null || e.resolve());
   }
   async transition(t, s, e, r) {
-    const n = this._states.get(t), i = this._states.get(s);
-    if (!n || !i) throw new Error(`State '${t}' or '${s}' not found`);
-    this.processOnExit(t, e), await this.processOnEnter(s, t, r), i.subStates && i.subStates.start();
+    const n = this._states.get(t), a = this._states.get(s);
+    if (!n || !a) throw new Error(`State '${t}' or '${s}' not found`);
+    this.processOnExit(t, e), await this.processOnEnter(s, t, r), a.subStates && a.subStates.start();
   }
   processOnExit(t, s) {
     var o;
     const e = this._states.get(t);
     if (!e) throw new Error(`State '${t}' not found`);
     if (!e.onExit) return;
-    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, i = this.extractGroups(e.onExit, r), h = this._executionController.create(i, r, n);
+    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, a = this.extractGroups(e.onExit, r), h = this._executionController.create(a, r, n);
     (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(h, !1);
   }
   async processOnEnter(t, s, e) {
@@ -178,12 +182,12 @@ class w {
     const r = this._states.get(t);
     if (!r) throw new Error(`State '${t}' not found`);
     if (!r.onEnter) return;
-    const n = { fsmName: this._name, from: s, to: t, data: e }, i = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`, h = this.extractGroups(r.onEnter, n);
-    this._currentExecutionId = this._executionController.create(h, n, i), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
+    const n = { fsmName: this._name, from: s, to: t, data: e }, a = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`, h = this.extractGroups(r.onEnter, n);
+    this._currentExecutionId = this._executionController.create(h, n, a), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
   }
   extractGroups(t, s) {
     if (typeof t == "function") {
-      const e = new S();
+      const e = new g();
       t(e, s);
       const r = new u(e);
       return d.instance.get(l).set(u, r), [u];
@@ -191,7 +195,7 @@ class w {
       return t;
   }
 }
-class g {
+class E {
   constructor(t) {
     this._store = t, this._unsubscribeFn = () => {
     };
@@ -235,15 +239,15 @@ class g {
     this._unsubscribeFn();
   }
 }
-class x {
+class b {
   create(t) {
     const s = new f(t);
-    return new g(s);
+    return new E(s);
   }
 }
 export {
-  g as EmpressStoreAdapter,
-  x as EmpressStoreFactory,
-  w as FSM,
+  E as EmpressStoreAdapter,
+  b as EmpressStoreFactory,
+  x as FSM,
   _ as TransitionStrategy
 };
