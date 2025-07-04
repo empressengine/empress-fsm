@@ -1,14 +1,26 @@
-import { DeferredPromise, ExecutionController } from 'empress-core';
-import { IStoreAdapter } from 'store-adapter';
+import { 
+    DeferredPromise, 
+    ExecutionController, 
+    GroupsContainer, 
+    GroupType, 
+    ServiceContainer, 
+    SystemChain, 
+    SystemGroup 
+} from 'empress-core';
+
 import { 
     IFSM, 
     IFSMConfig, 
     IHooksConfig, 
     IStateConfig, 
+    IStateLifeCycleData, 
     IStoreState, 
     StateLifecycle, 
     TransitionStrategy 
 } from './models';
+
+import { WrapperGroup } from './wrapper.group';
+import { IStoreAdapter } from 'store-adapter';
 
 /**
  * @description
@@ -279,7 +291,8 @@ export class FSM<T extends object> implements IFSM<T> {
 
         const data = { fsmName: this._name, from, to: '', data: storeData };
         const name = `[FSM][onExit] In ${this._name} from ${from}}`;
-        const executionId = this._executionController.create(stateConfig.onExit, data, name);
+        const groups = this.extractGroups(stateConfig.onExit, data);
+        const executionId = this._executionController.create(groups, data, name);
 
         this._hooks?.onExit && this._hooks.onExit(data);
         this._executionController.run(executionId, false);
@@ -293,12 +306,32 @@ export class FSM<T extends object> implements IFSM<T> {
 
         const data = { fsmName: this._name, from, to, data: storeData };
         const name = `[FSM][onEnter] In ${this._name} from ${from} to ${to}`;
-        this._currentExecutionId = this._executionController.create(stateConfig.onEnter, data, name);
+        const groups = this.extractGroups(stateConfig.onEnter, data);
+        this._currentExecutionId = this._executionController.create(groups, data, name);
 
         this._currentState = to;
 
         this._hooks?.onEnter && this._hooks.onEnter(data);
         await this._executionController.run(this._currentExecutionId);
+    }
+
+    private extractGroups(
+        groups: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void),
+        data: IStateLifeCycleData<T>
+    ): GroupType<IStateLifeCycleData<T>>[] {
+        if(typeof groups === 'function') {
+            const chain = new SystemChain();
+            groups(chain, data);
+
+            const wrapper: SystemGroup<IStateLifeCycleData<T>> = new WrapperGroup(chain);
+            const groupsContainer = ServiceContainer.instance.get(GroupsContainer);
+            groupsContainer.set(WrapperGroup, wrapper);
+
+            return [WrapperGroup];
+        }
+        else {
+            return groups;
+        }
     }
     
 }
