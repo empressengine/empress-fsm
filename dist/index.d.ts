@@ -219,8 +219,8 @@ export declare interface IStateConfig<T extends object> {
     name: string;
     transitions?: TransitionConfig<T>[];
     subStates?: IFSM<any>;
-    onEnter?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
-    onExit?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
+    onEnter?: StateAction<T>;
+    onExit?: StateAction<T>;
     /**
      * Strategy for handling transitions during state execution.
      * - Stop: Immediately stops current state execution when transitioning
@@ -273,6 +273,12 @@ export declare interface IStoreState<T extends object> {
     current: T;
     prev: T;
 }
+
+/**
+ * Тип действия состояния.
+ * @template T - Тип данных состояния
+ */
+export declare type StateAction<T extends object> = GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
 
 /**
  * Тип функции жизненного цикла состояния.

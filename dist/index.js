@@ -1,14 +1,14 @@
 import { SystemGroup as p, SystemChain as S, DeferredPromise as c, ServiceContainer as d, GroupsContainer as l } from "empress-core";
-import { Store as f } from "empress-store";
+import { Store as g } from "empress-store";
 var _ = /* @__PURE__ */ ((i) => (i.Stop = "stop", i.Wait = "wait", i))(_ || {});
-class u extends p {
+class h extends p {
   constructor(t) {
     super(), this.chain = t;
   }
   setup(t, s) {
   }
 }
-class g extends S {
+class f extends S {
   clear() {
   }
 }
@@ -174,23 +174,23 @@ class x {
     const e = this._states.get(t);
     if (!e) throw new Error(`State '${t}' not found`);
     if (!e.onExit) return;
-    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, a = this.extractGroups(e.onExit, r), h = this._executionController.create(a, r, n);
-    (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(h, !1);
+    const r = { fsmName: this._name, from: t, to: "", data: s }, n = `[FSM][onExit] In ${this._name} from ${t}}`, a = this.extractGroups(e.onExit, r), u = this._executionController.create(a, r, n);
+    (o = this._hooks) != null && o.onExit && this._hooks.onExit(r), this._executionController.run(u, !1);
   }
   async processOnEnter(t, s, e) {
     var o;
     const r = this._states.get(t);
     if (!r) throw new Error(`State '${t}' not found`);
     if (!r.onEnter) return;
-    const n = { fsmName: this._name, from: s, to: t, data: e }, a = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`, h = this.extractGroups(r.onEnter, n);
-    this._currentExecutionId = this._executionController.create(h, n, a), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
+    const n = { fsmName: this._name, from: s, to: t, data: e }, a = `[FSM][onEnter] In ${this._name} from ${s} to ${t}`, u = this.extractGroups(r.onEnter, n);
+    this._currentExecutionId = this._executionController.create(u, n, a), this._currentState = t, (o = this._hooks) != null && o.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
   }
   extractGroups(t, s) {
     if (typeof t == "function") {
-      const e = new g();
+      const e = new f();
       t(e, s);
-      const r = new u(e);
-      return d.instance.get(l).set(u, r), [u];
+      const r = new h(e);
+      return d.instance.get(l).set(h, r), [h];
     } else
       return t;
   }
@@ -241,7 +241,7 @@ class E {
 }
 class b {
   create(t) {
-    const s = new f(t);
+    const s = new g(t);
     return new E(s);
   }
 }
