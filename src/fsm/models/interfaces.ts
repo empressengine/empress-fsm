@@ -1,5 +1,4 @@
-import { GroupType, SystemChain } from 'empress-core';
-import { StateLifecycle, TransitionConfig, TransitionStrategy, TransitionContext } from './types';
+import { StateLifecycle, TransitionConfig, TransitionStrategy, TransitionContext, StateAction } from './types';
 import { IStoreAdapter } from 'store-adapter';
 
 /**
@@ -45,8 +44,8 @@ export interface IStateConfig<T extends object> {
     name: string;
     transitions?: TransitionConfig<T>[];
     subStates?: IFSM<any>;
-    onEnter?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
-    onExit?: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);
+    onEnter?: StateAction<T>;
+    onExit?: StateAction<T>;
     /**
      * Strategy for handling transitions during state execution.
      * - Stop: Immediately stops current state execution when transitioning

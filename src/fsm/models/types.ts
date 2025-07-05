@@ -1,5 +1,6 @@
 import { Store } from "empress-store";
 import { IStateLifeCycleData, IStateConfig } from './interfaces';
+import { GroupType, SystemChain } from "empress-core";
 
 /**
  * Тип, представляющий состояние конечного автомата.
@@ -51,3 +52,9 @@ export interface TransitionConfig<T extends object> {
  * @template T - Тип данных состояния
  */
 export type Condition<T extends object> = (store: Store<T>) => boolean;
+
+/**
+ * Тип действия состояния.
+ * @template T - Тип данных состояния
+ */
+export type StateAction<T extends object> = GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void);

@@ -15,6 +15,7 @@ import {
     IStateConfig, 
     IStateLifeCycleData, 
     IStoreState, 
+    StateAction, 
     StateLifecycle, 
     TransitionStrategy 
 } from './models';
@@ -317,12 +318,12 @@ export class FSM<T extends object> implements IFSM<T> {
     }
 
     private extractGroups(
-        groups: GroupType<IStateLifeCycleData<T>>[] | ((chain: SystemChain, data: IStateLifeCycleData<T>) => void),
+        actions: StateAction<T>,
         data: IStateLifeCycleData<T>
     ): GroupType<IStateLifeCycleData<T>>[] {
-        if(typeof groups === 'function') {
+        if(typeof actions === 'function') {
             const chain = new WrapperChain();
-            groups(chain, data);
+            actions(chain, data);
 
             const wrapper: SystemGroup<IStateLifeCycleData<T>> = new WrapperGroup(chain);
             const groupsContainer = ServiceContainer.instance.get(GroupsContainer);
@@ -331,7 +332,7 @@ export class FSM<T extends object> implements IFSM<T> {
             return [WrapperGroup];
         }
         else {
-            return groups;
+            return actions;
         }
     }
     
