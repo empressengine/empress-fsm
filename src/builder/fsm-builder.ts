@@ -32,14 +32,14 @@ import { IStoreAdapter } from "../store-adapter/";
  * const builder = new FSMBuilder<IGlobalStore>('global', store);
  * 
  * builder
- *     .setInitialState('connection')
- *     .addState('connection')
- *       .addTransition('loading', state => state.connected)
- *     .addState('loading')
- *       .addTransition('main', state => state.loaded)
- *       .addOnEnterGroup(LoadAssetsGroup, 'LoadAssetsGroup')
- *     .addState('main')
- *       .addOnEnterChain((chain, data) => {
+ *     .initialState('connection')
+ *     .state('connection')
+ *       .transition('loading', state => state.connected)
+ *     .state('loading')
+ *       .transition('main', state => state.loaded)
+ *       .group(LoadAssetsGroup, 'LoadAssetsGroup')
+ *     .state('main')
+ *       .onEnterChain((chain, data) => {
  *         chain
  *             .add(ScenesChangeSceneSystem,{ scene: MainScene }, { canExecute: () => data.to === 'main' })
  *       })
@@ -85,7 +85,7 @@ export class FSMBuilder<T extends object> {
      * 
      * @param value Начальное состояние FSM.
      */
-    public setInitialState(value: string): this {
+    public initialState(value: string): this {
         this._config.initialState = value;
         return this;
     }
@@ -96,7 +96,13 @@ export class FSMBuilder<T extends object> {
      * 
      * @param name Имя состояния.
      */
-    public addState(name: string): this {
+    public state(name: string): this {
+        let state = this._config.states.find(s => s.name === name);
+        if(state) {
+            this._editedState = state;
+            return this;
+        }
+
         this._editedState = {
             name,
             onEnter: [],
@@ -130,7 +136,7 @@ export class FSMBuilder<T extends object> {
      * 
      * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
      */
-    public addSubStates(fsm: IFSM<T>): this {
+    public subStates(fsm: IFSM<T>): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -141,15 +147,14 @@ export class FSMBuilder<T extends object> {
 
     /**
      * @description
-     * Удаляет под-состояния из конфигурации FSM.
-     * 
-     * @param state Имя состояния.
+     * Удаляет под-состояния из конфигурации FSM для текущего состояния.
      */
-    public removeSubStates(state: string): this {
-        this._config.states = this._config.states.map(s => {
-            if(s.name === state) { s.subStates = undefined; }
-            return s;
-        });
+    public removeSubStates(): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._editedState.subStates = undefined;
 
         return this;
     }
@@ -161,11 +166,12 @@ export class FSMBuilder<T extends object> {
      * @param state Имя состояния.
      * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
      */
-    public replaceSubStates(state: string, fsm: IFSM<T>): this {
-        this._config.states = this._config.states.map(s => {
-            if(s.name === state) { s.subStates = fsm; }
-            return s;
-        });
+    public replaceSubStates(fsm: IFSM<T>): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._editedState.subStates = fsm;
 
         return this;
     }
@@ -181,7 +187,7 @@ export class FSMBuilder<T extends object> {
      * @param to Имя состояния, в которое осуществляется переход.
      * @param condition Условие перехода.
      */
-    public addTransition(to: string, condition: (state: T) => boolean): this {
+    public transition(to: string, condition: (state: T) => boolean): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -198,14 +204,14 @@ export class FSMBuilder<T extends object> {
      * @description
      * Удаляет переход из конфигурации состояния.
      * 
-     * @param state Имя состояния, из которого осуществляется переход.
      * @param to Имя состояния, в которое осуществляется переход.
      */
-    public removeTransition(state: string, to: string): this {
-        this._config.states = this._config.states.map(s => {
-            if(s.name === state) { s.transitions = s.transitions?.filter(t => t.to !== to); }
-            return s;
-        });
+    public removeTransition(to: string): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._editedState.transitions = this._editedState.transitions?.filter(t => t.to !== to);
 
         return this;
     }
@@ -214,15 +220,15 @@ export class FSMBuilder<T extends object> {
      * @description
      * Заменяет переход в конфигурации состояния.
      * 
-     * @param state Имя состояния, из которого осуществляется переход.
      * @param to Имя состояния, в которое осуществляется переход.
      * @param condition Новое условие перехода.
      */
-    public replaceTransition(state: string, to: string, condition: (state: T) => boolean): this {
-        this._config.states = this._config.states.map(s => {
-            if(s.name === state) { s.transitions = s.transitions?.map(t => t.to === to ? { to, condition } : t); }
-            return s;
-        });
+    public replaceTransition(to: string, condition: (state: T) => boolean): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._editedState.transitions = this._editedState.transitions?.map(t => t.to === to ? { to, condition } : t);
 
         return this;
     }
@@ -237,7 +243,7 @@ export class FSMBuilder<T extends object> {
      * 
      * @param action Действие, которое будет добавлено в конфигурацию состояния.
      */
-    public addOnEnterChain(
+    public onEnterChain(
         action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void
     ): this {
         if(!this._editedState) {
@@ -254,7 +260,7 @@ export class FSMBuilder<T extends object> {
      * 
      * @param action Действие, которое будет добавлено в конфигурацию состояния.
      */
-    public addOnExitChain(
+    public onExitChain(
         action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void
     ): this {
         if(!this._editedState) {
@@ -271,19 +277,25 @@ export class FSMBuilder<T extends object> {
      * 
      * @param state Имя состояния из которого удаляется дейсвтие.
      */
-    public removeOnEnterChain(state: string): this {
-        this._onEnterChains.delete(state);
+    public removeOnEnterChain(): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._onEnterChains.delete(this._editedState.name);
         return this;
     }
 
     /**
      * @description
      * Удаляет действие onExit из конфигурации состояния.
-     * 
-     * @param state Имя состояния из которого удаляется дейсвтие.
      */
-    public removeOnExitChain(state: string): this {
-        this._onExitChains.delete(state);
+    public removeOnExitChain(): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._onExitChains.delete(this._editedState.name);
         return this;
     }
 
@@ -291,11 +303,14 @@ export class FSMBuilder<T extends object> {
      * @description
      * Заменяет действие onEnter для указанного состояния в конфигурации состояния.
      * 
-     * @param state Имя состояния для которого заменяется дейсвтие.
      * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
      */
-    public replaceOnEnterChain(state: string, action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this {
-        this._onEnterChains.set(state, action);
+    public replaceOnEnterChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._onEnterChains.set(this._editedState.name, action);
         return this;
     }
 
@@ -303,11 +318,14 @@ export class FSMBuilder<T extends object> {
      * @description
      * Заменяет действие onExit для указанного состояния в конфигурации состояния.
      * 
-     * @param state Имя состояния для которого заменяется дейсвтие.
      * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
      */
-    public replaceOnExitChain(state: string, action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this {
-        this._onExitChains.set(state, action);
+    public replaceOnExitChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        this._onExitChains.set(this._editedState.name, action);
         return this;
     }
 
@@ -323,7 +341,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnEnterGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onEnterGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -337,35 +355,21 @@ export class FSMBuilder<T extends object> {
 
     /**
      * @description
-     * Добавляет группу систем onEnter для указанного состояния в конфигурацию состояния.
-     * 
-     * @param state Имя состояния для которого добавляется группа систем.
-     * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-     * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-     * генерируется автоматически.
-     */
-    public addOnEnterGroupToState(state: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onEnterGroups.get(state) || [];
-        item.push({action, id});
-        this._onEnterGroups.set(state, item);
-
-        return this;
-    }
-
-    /**
-     * @description
      * Добавляет группу систем onEnter для указанного состояния перед указанной группой.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnEnterGroupBefore(state: string, groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onEnterGroups.get(state) || [];
+    public onEnterGroupBefore(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onEnterGroups.get(this._editedState.name) || [];
         item.splice(item.findIndex(g => g.id === groupId), 0, {action, id});
-        this._onEnterGroups.set(state, item);
+        this._onEnterGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -374,16 +378,19 @@ export class FSMBuilder<T extends object> {
      * @description
      * Добавляет группу систем onEnter для указанного состояния после указанной группы.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnEnterGroupAfter(state: string, groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onEnterGroups.get(state) || [];
+    public onEnterGroupAfter(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onEnterGroups.get(this._editedState.name) || [];
         item.splice(item.findIndex(g => g.id === groupId) + 1, 0, {action, id});
-        this._onEnterGroups.set(state, item);
+        this._onEnterGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -392,15 +399,18 @@ export class FSMBuilder<T extends object> {
      * @description
      * Добавляет группу систем onEnter для указанного состояния в начало списка групп.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnEnterGroupToStart(state: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onEnterGroups.get(state) || [];
+    public onEnterGroupToStart(action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onEnterGroups.get(this._editedState.name) || [];
         item.unshift({action, id});
-        this._onEnterGroups.set(state, item);
+        this._onEnterGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -413,7 +423,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnExitGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onExitGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -427,35 +437,21 @@ export class FSMBuilder<T extends object> {
 
     /**
      * @description
-     * Добавляет группу систем onExit для указанного состояния в конфигурацию состояния.
-     * 
-     * @param state Имя состояния для которого добавляется группа систем.
-     * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-     * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-     * генерируется автоматически.
-     */
-    public addOnExitGroupToState(state: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onExitGroups.get(state) || [];
-        item.push({action, id});
-        this._onExitGroups.set(state, item);
-
-        return this;
-    }
-
-    /**
-     * @description
      * Добавляет группу систем onExit для указанного состояния перед указанной группой.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnExitGroupBefore(state: string, groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onExitGroups.get(state) || [];
+    public onExitGroupBefore(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onExitGroups.get(this._editedState.name) || [];
         item.splice(item.findIndex(g => g.id === groupId), 0, {action, id});
-        this._onExitGroups.set(state, item);
+        this._onExitGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -464,16 +460,19 @@ export class FSMBuilder<T extends object> {
      * @description
      * Добавляет группу действий onExit для указанного состояния после указанной группы.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnExitGroupAfter(state: string, groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onExitGroups.get(state) || [];
+    public onExitGroupAfter(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onExitGroups.get(this._editedState.name) || [];
         item.splice(item.findIndex(g => g.id === groupId) + 1, 0, {action, id});
-        this._onExitGroups.set(state, item);
+        this._onExitGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -482,15 +481,18 @@ export class FSMBuilder<T extends object> {
      * @description
      * Добавляет группу систем onExit для указанного состояния в начало списка групп.
      * 
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public addOnExitGroupToStart(state: string, action: GroupType<T>, id: string = Utils.uuid()): this {
-        const item = this._onExitGroups.get(state) || [];
+    public onExitGroupToStart(action: GroupType<T>, id: string = Utils.uuid()): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        const item = this._onExitGroups.get(this._editedState.name) || [];
         item.unshift({action, id});
-        this._onExitGroups.set(state, item);
+        this._onExitGroups.set(this._editedState.name, item);
 
         return this;
     }
@@ -499,15 +501,18 @@ export class FSMBuilder<T extends object> {
      * @description
      * Удаляет группу систем onEnter для указанного состояния.
      * 
-     * @param state Имя состояния для которого удаляется группа систем.
      * @param id Уникальный идентификатор группы систем.
      */
-    public removeOnEnterGroup(state: string, id: string): this {
-        let groups = this._onEnterGroups.get(state);
+    public removeOnEnterGroup(id: string): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        let groups = this._onEnterGroups.get(this._editedState.name);
         if(!groups) return this;
 
         groups = groups.filter(g => g.id !== id);
-        this._onEnterGroups.set(state, groups);
+        this._onEnterGroups.set(this._editedState.name, groups);
         return this;
     }
 
@@ -515,15 +520,18 @@ export class FSMBuilder<T extends object> {
      * @description
      * Удаляет группу систем onExit для указанного состояния.
      * 
-     * @param state Имя состояния для которого удаляется группа систем.
      * @param id Уникальный идентификатор группы систем.
      */
-    public removeOnExitGroup(state: string, id: string): this {
-        let groups = this._onExitGroups.get(state);
+    public removeOnExitGroup(id: string): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        let groups = this._onExitGroups.get(this._editedState.name);
         if(!groups) return this;
 
         groups = groups.filter(g => g.id !== id);
-        this._onExitGroups.set(state, groups);
+        this._onExitGroups.set(this._editedState.name, groups);
         return this;
     }
 
@@ -531,17 +539,20 @@ export class FSMBuilder<T extends object> {
      * @description
      * Заменяет указанную группу систем onEnter для указанного состояния новой группой.
      * 
-     * @param state Имя состояния для которого заменяется группа систем.
      * @param id Уникальный идентификатор заменяемой группы систем. 
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    public replaceOnEnterGroup(state: string, id: string, action: GroupType<T>): this {
-        let groups = this._onEnterGroups.get(state);
+    public replaceOnEnterGroup(id: string, action: GroupType<T>): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        let groups = this._onEnterGroups.get(this._editedState.name);
         if(!groups) return this;
 
         groups = groups.map(g => g.id === id ? {action, id} : g);
-        this._onEnterGroups.set(state, groups);
+        this._onEnterGroups.set(this._editedState.name, groups);
         return this;
     }
 
@@ -549,17 +560,20 @@ export class FSMBuilder<T extends object> {
      * @description
      * Заменяет указанную группу систем onExit для указанного состояния новой группой.
      * 
-     * @param state Имя состояния для которого заменяется группа систем.
      * @param id Уникальный идентификатор заменяемой группы систем. 
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    public replaceOnExitGroup(state: string, id: string, action: GroupType<T>): this {
-        let groups = this._onExitGroups.get(state);
+    public replaceOnExitGroup(id: string, action: GroupType<T>): this {
+        if(!this._editedState) {
+            throw new Error('State is not edited');
+        }
+
+        let groups = this._onExitGroups.get(this._editedState.name);
         if(!groups) return this;
 
         groups = groups.map(g => g.id === id ? {action, id} : g);
-        this._onExitGroups.set(state, groups);
+        this._onExitGroups.set(this._editedState.name, groups);
         return this;
     }
 
