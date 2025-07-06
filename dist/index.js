@@ -1,18 +1,18 @@
-import { SystemGroup as E, SystemChain as S, DeferredPromise as _, ServiceContainer as d, GroupsContainer as l, Utils as a, ExecutionController as f } from "empress-core";
-import { Store as g } from "empress-store";
-var p = /* @__PURE__ */ ((o) => (o.Stop = "stop", o.Wait = "wait", o))(p || {});
-class c extends E {
+import { SystemGroup as p, SystemChain as E, DeferredPromise as _, ServiceContainer as c, GroupsContainer as f, Utils as a, ExecutionController as l } from "empress-core";
+import { Store as m } from "empress-store";
+var S = /* @__PURE__ */ ((r) => (r.Stop = "stop", r.Wait = "wait", r))(S || {});
+class u extends p {
   constructor(t) {
     super(), this.chain = t;
   }
   setup(t, e) {
   }
 }
-class m extends S {
+class w extends E {
   clear() {
   }
 }
-class x {
+class g {
   /**
    * @description
    * Создает новый экземпляр конечного автомата.
@@ -124,7 +124,7 @@ class x {
     var i;
     if (!this._isRunning) return;
     const e = this._states.get(this._currentState);
-    (e == null ? void 0 : e.transitionStrategy) === p.Stop && this._executionController.stop(this._currentExecutionId), await ((i = this._transitionPromise) == null ? void 0 : i.promise), this._storeAdapter.update(t);
+    (e == null ? void 0 : e.transitionStrategy) === S.Stop && this._executionController.stop(this._currentExecutionId), await ((i = this._transitionPromise) == null ? void 0 : i.promise), this._storeAdapter.update(t);
   }
   /**
    * @description
@@ -165,37 +165,37 @@ class x {
     e && (this._transitionPromise = new _(), await this.transition(this._currentState, e, this._currentStateData, t), this._currentStateData = t, (i = this._transitionPromise) == null || i.resolve());
   }
   async transition(t, e, i, s) {
-    const n = this._states.get(t), r = this._states.get(e);
-    if (!n || !r) throw new Error(`State '${t}' or '${e}' not found`);
-    this.processOnExit(t, i), await this.processOnEnter(e, t, s), r.subStates && r.subStates.start();
+    const n = this._states.get(t), o = this._states.get(e);
+    if (!n || !o) throw new Error(`State '${t}' or '${e}' not found`);
+    this.processOnExit(t, i), await this.processOnEnter(e, t, s), o.subStates && o.subStates.start();
   }
   processOnExit(t, e) {
     var h;
     const i = this._states.get(t);
     if (!i) throw new Error(`State '${t}' not found`);
     if (!i.onExit) return;
-    const s = { fsmName: this._name, from: t, to: "", data: e }, n = `[FSM][onExit] In ${this._name} from ${t}}`, r = this.extractGroups(i.onExit, s), u = this._executionController.create(r, s, n);
-    (h = this._hooks) != null && h.onExit && this._hooks.onExit(s), this._executionController.run(u, !1);
+    const s = { fsmName: this._name, from: t, to: "", data: e }, n = `[FSM][onExit] In ${this._name} from ${t}}`, o = this.extractGroups(i.onExit, s), d = this._executionController.create(o, s, n);
+    (h = this._hooks) != null && h.onExit && this._hooks.onExit(s), this._executionController.run(d, !1);
   }
   async processOnEnter(t, e, i) {
     var h;
     const s = this._states.get(t);
     if (!s) throw new Error(`State '${t}' not found`);
     if (!s.onEnter) return;
-    const n = { fsmName: this._name, from: e, to: t, data: i }, r = `[FSM][onEnter] In ${this._name} from ${e} to ${t}`, u = this.extractGroups(s.onEnter, n);
-    this._currentExecutionId = this._executionController.create(u, n, r), this._currentState = t, (h = this._hooks) != null && h.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
+    const n = { fsmName: this._name, from: e, to: t, data: i }, o = `[FSM][onEnter] In ${this._name} from ${e} to ${t}`, d = this.extractGroups(s.onEnter, n);
+    this._currentExecutionId = this._executionController.create(d, n, o), this._currentState = t, (h = this._hooks) != null && h.onEnter && this._hooks.onEnter(n), await this._executionController.run(this._currentExecutionId);
   }
   extractGroups(t, e) {
     if (typeof t == "function") {
-      const i = new m();
+      const i = new w();
       t(i, e);
-      const s = new c(i);
-      return d.instance.get(l).set(c, s), [c];
+      const s = new u(i);
+      return c.instance.get(f).set(u, s), [u];
     } else
       return t;
   }
 }
-class w {
+class x {
   constructor(t) {
     this._store = t, this._unsubscribeFn = () => {
     };
@@ -241,8 +241,8 @@ class w {
 }
 class G {
   create(t) {
-    const e = new g(t);
-    return new w(e);
+    const e = new m(t);
+    return new x(e);
   }
 }
 class b {
@@ -270,7 +270,7 @@ class b {
    * 
    * @param value Начальное состояние FSM.
    */
-  setInitialState(t) {
+  initialState(t) {
     return this._config.initialState = t, this;
   }
   /**
@@ -279,13 +279,14 @@ class b {
    * 
    * @param name Имя состояния.
    */
-  addState(t) {
-    return this._editedState = {
+  state(t) {
+    let e = this._config.states.find((i) => i.name === t);
+    return e ? (this._editedState = e, this) : (this._editedState = {
       name: t,
       onEnter: [],
       onExit: [],
       transitions: []
-    }, this._config.states.push(this._editedState), this;
+    }, this._config.states.push(this._editedState), this);
   }
   /**
    * @description
@@ -302,19 +303,19 @@ class b {
    * 
    * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
    */
-  addSubStates(t) {
+  subStates(t) {
     if (!this._editedState)
       throw new Error("State is not edited");
     return this._editedState.subStates = t, this;
   }
   /**
    * @description
-   * Удаляет под-состояния из конфигурации FSM.
-   * 
-   * @param state Имя состояния.
+   * Удаляет под-состояния из конфигурации FSM для текущего состояния.
    */
-  removeSubStates(t) {
-    return this._config.states = this._config.states.map((e) => (e.name === t && (e.subStates = void 0), e)), this;
+  removeSubStates() {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._editedState.subStates = void 0, this;
   }
   /**
    * @description
@@ -323,8 +324,10 @@ class b {
    * @param state Имя состояния.
    * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
    */
-  replaceSubStates(t, e) {
-    return this._config.states = this._config.states.map((i) => (i.name === t && (i.subStates = e), i)), this;
+  replaceSubStates(t) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._editedState.subStates = t, this;
   }
   // ==================================== //
   //             TRANSITIONS              //
@@ -336,7 +339,7 @@ class b {
    * @param to Имя состояния, в которое осуществляется переход.
    * @param condition Условие перехода.
    */
-  addTransition(t, e) {
+  transition(t, e) {
     var i;
     if (!this._editedState)
       throw new Error("State is not edited");
@@ -349,28 +352,26 @@ class b {
    * @description
    * Удаляет переход из конфигурации состояния.
    * 
-   * @param state Имя состояния, из которого осуществляется переход.
    * @param to Имя состояния, в которое осуществляется переход.
    */
-  removeTransition(t, e) {
-    return this._config.states = this._config.states.map((i) => {
-      var s;
-      return i.name === t && (i.transitions = (s = i.transitions) == null ? void 0 : s.filter((n) => n.to !== e)), i;
-    }), this;
+  removeTransition(t) {
+    var e;
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._editedState.transitions = (e = this._editedState.transitions) == null ? void 0 : e.filter((i) => i.to !== t), this;
   }
   /**
    * @description
    * Заменяет переход в конфигурации состояния.
    * 
-   * @param state Имя состояния, из которого осуществляется переход.
    * @param to Имя состояния, в которое осуществляется переход.
    * @param condition Новое условие перехода.
    */
-  replaceTransition(t, e, i) {
-    return this._config.states = this._config.states.map((s) => {
-      var n;
-      return s.name === t && (s.transitions = (n = s.transitions) == null ? void 0 : n.map((r) => r.to === e ? { to: e, condition: i } : r)), s;
-    }), this;
+  replaceTransition(t, e) {
+    var i;
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._editedState.transitions = (i = this._editedState.transitions) == null ? void 0 : i.map((s) => s.to === t ? { to: t, condition: e } : s), this;
   }
   // ==================================== //
   //             CHAINS                   //
@@ -381,7 +382,7 @@ class b {
    * 
    * @param action Действие, которое будет добавлено в конфигурацию состояния.
    */
-  addOnEnterChain(t) {
+  onEnterChain(t) {
     if (!this._editedState)
       throw new Error("State is not edited");
     return this._onEnterChains.set(this._editedState.name, t), this;
@@ -392,7 +393,7 @@ class b {
    * 
    * @param action Действие, которое будет добавлено в конфигурацию состояния.
    */
-  addOnExitChain(t) {
+  onExitChain(t) {
     if (!this._editedState)
       throw new Error("State is not edited");
     return this._onExitChains.set(this._editedState.name, t), this;
@@ -403,37 +404,41 @@ class b {
    * 
    * @param state Имя состояния из которого удаляется дейсвтие.
    */
-  removeOnEnterChain(t) {
-    return this._onEnterChains.delete(t), this;
+  removeOnEnterChain() {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._onEnterChains.delete(this._editedState.name), this;
   }
   /**
    * @description
    * Удаляет действие onExit из конфигурации состояния.
-   * 
-   * @param state Имя состояния из которого удаляется дейсвтие.
    */
-  removeOnExitChain(t) {
-    return this._onExitChains.delete(t), this;
+  removeOnExitChain() {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._onExitChains.delete(this._editedState.name), this;
   }
   /**
    * @description
    * Заменяет действие onEnter для указанного состояния в конфигурации состояния.
    * 
-   * @param state Имя состояния для которого заменяется дейсвтие.
    * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
    */
-  replaceOnEnterChain(t, e) {
-    return this._onEnterChains.set(t, e), this;
+  replaceOnEnterChain(t) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._onEnterChains.set(this._editedState.name, t), this;
   }
   /**
    * @description
    * Заменяет действие onExit для указанного состояния в конфигурации состояния.
    * 
-   * @param state Имя состояния для которого заменяется дейсвтие.
    * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
    */
-  replaceOnExitChain(t, e) {
-    return this._onExitChains.set(t, e), this;
+  replaceOnExitChain(t) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    return this._onExitChains.set(this._editedState.name, t), this;
   }
   // ==================================== //
   //             GROUPS                   //
@@ -446,7 +451,7 @@ class b {
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnEnterGroup(t, e = a.uuid()) {
+  onEnterGroup(t, e = a.uuid()) {
     if (!this._editedState)
       throw new Error("State is not edited");
     const i = this._onEnterGroups.get(this._editedState.name) || [];
@@ -454,57 +459,47 @@ class b {
   }
   /**
    * @description
-   * Добавляет группу систем onEnter для указанного состояния в конфигурацию состояния.
-   * 
-   * @param state Имя состояния для которого добавляется группа систем.
-   * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-   * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-   * генерируется автоматически.
-   */
-  addOnEnterGroupToState(t, e, i = a.uuid()) {
-    const s = this._onEnterGroups.get(t) || [];
-    return s.push({ action: e, id: i }), this._onEnterGroups.set(t, s), this;
-  }
-  /**
-   * @description
    * Добавляет группу систем onEnter для указанного состояния перед указанной группой.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnEnterGroupBefore(t, e, i, s = a.uuid()) {
-    const n = this._onEnterGroups.get(t) || [];
-    return n.splice(n.findIndex((r) => r.id === e), 0, { action: i, id: s }), this._onEnterGroups.set(t, n), this;
+  onEnterGroupBefore(t, e, i = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const s = this._onEnterGroups.get(this._editedState.name) || [];
+    return s.splice(s.findIndex((n) => n.id === t), 0, { action: e, id: i }), this._onEnterGroups.set(this._editedState.name, s), this;
   }
   /**
    * @description
    * Добавляет группу систем onEnter для указанного состояния после указанной группы.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnEnterGroupAfter(t, e, i, s = a.uuid()) {
-    const n = this._onEnterGroups.get(t) || [];
-    return n.splice(n.findIndex((r) => r.id === e) + 1, 0, { action: i, id: s }), this._onEnterGroups.set(t, n), this;
+  onEnterGroupAfter(t, e, i = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const s = this._onEnterGroups.get(this._editedState.name) || [];
+    return s.splice(s.findIndex((n) => n.id === t) + 1, 0, { action: e, id: i }), this._onEnterGroups.set(this._editedState.name, s), this;
   }
   /**
    * @description
    * Добавляет группу систем onEnter для указанного состояния в начало списка групп.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnEnterGroupToStart(t, e, i = a.uuid()) {
-    const s = this._onEnterGroups.get(t) || [];
-    return s.unshift({ action: e, id: i }), this._onEnterGroups.set(t, s), this;
+  onEnterGroupToStart(t, e = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const i = this._onEnterGroups.get(this._editedState.name) || [];
+    return i.unshift({ action: t, id: e }), this._onEnterGroups.set(this._editedState.name, i), this;
   }
   /**
    * @description
@@ -514,7 +509,7 @@ class b {
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnExitGroup(t, e = a.uuid()) {
+  onExitGroup(t, e = a.uuid()) {
     if (!this._editedState)
       throw new Error("State is not edited");
     const i = this._onExitGroups.get(this._editedState.name) || [];
@@ -522,105 +517,99 @@ class b {
   }
   /**
    * @description
-   * Добавляет группу систем onExit для указанного состояния в конфигурацию состояния.
-   * 
-   * @param state Имя состояния для которого добавляется группа систем.
-   * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-   * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-   * генерируется автоматически.
-   */
-  addOnExitGroupToState(t, e, i = a.uuid()) {
-    const s = this._onExitGroups.get(t) || [];
-    return s.push({ action: e, id: i }), this._onExitGroups.set(t, s), this;
-  }
-  /**
-   * @description
    * Добавляет группу систем onExit для указанного состояния перед указанной группой.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnExitGroupBefore(t, e, i, s = a.uuid()) {
-    const n = this._onExitGroups.get(t) || [];
-    return n.splice(n.findIndex((r) => r.id === e), 0, { action: i, id: s }), this._onExitGroups.set(t, n), this;
+  onExitGroupBefore(t, e, i = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const s = this._onExitGroups.get(this._editedState.name) || [];
+    return s.splice(s.findIndex((n) => n.id === t), 0, { action: e, id: i }), this._onExitGroups.set(this._editedState.name, s), this;
   }
   /**
    * @description
    * Добавляет группу действий onExit для указанного состояния после указанной группы.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnExitGroupAfter(t, e, i, s = a.uuid()) {
-    const n = this._onExitGroups.get(t) || [];
-    return n.splice(n.findIndex((r) => r.id === e) + 1, 0, { action: i, id: s }), this._onExitGroups.set(t, n), this;
+  onExitGroupAfter(t, e, i = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const s = this._onExitGroups.get(this._editedState.name) || [];
+    return s.splice(s.findIndex((n) => n.id === t) + 1, 0, { action: e, id: i }), this._onExitGroups.set(this._editedState.name, s), this;
   }
   /**
    * @description
    * Добавляет группу систем onExit для указанного состояния в начало списка групп.
    * 
-   * @param state Имя состояния для которого добавляется группа систем.
    * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
    * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
    * генерируется автоматически.
    */
-  addOnExitGroupToStart(t, e, i = a.uuid()) {
-    const s = this._onExitGroups.get(t) || [];
-    return s.unshift({ action: e, id: i }), this._onExitGroups.set(t, s), this;
+  onExitGroupToStart(t, e = a.uuid()) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    const i = this._onExitGroups.get(this._editedState.name) || [];
+    return i.unshift({ action: t, id: e }), this._onExitGroups.set(this._editedState.name, i), this;
   }
   /**
    * @description
    * Удаляет группу систем onEnter для указанного состояния.
    * 
-   * @param state Имя состояния для которого удаляется группа систем.
    * @param id Уникальный идентификатор группы систем.
    */
-  removeOnEnterGroup(t, e) {
-    let i = this._onEnterGroups.get(t);
-    return i ? (i = i.filter((s) => s.id !== e), this._onEnterGroups.set(t, i), this) : this;
+  removeOnEnterGroup(t) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    let e = this._onEnterGroups.get(this._editedState.name);
+    return e ? (e = e.filter((i) => i.id !== t), this._onEnterGroups.set(this._editedState.name, e), this) : this;
   }
   /**
    * @description
    * Удаляет группу систем onExit для указанного состояния.
    * 
-   * @param state Имя состояния для которого удаляется группа систем.
    * @param id Уникальный идентификатор группы систем.
    */
-  removeOnExitGroup(t, e) {
-    let i = this._onExitGroups.get(t);
-    return i ? (i = i.filter((s) => s.id !== e), this._onExitGroups.set(t, i), this) : this;
+  removeOnExitGroup(t) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    let e = this._onExitGroups.get(this._editedState.name);
+    return e ? (e = e.filter((i) => i.id !== t), this._onExitGroups.set(this._editedState.name, e), this) : this;
   }
   /**
    * @description
    * Заменяет указанную группу систем onEnter для указанного состояния новой группой.
    * 
-   * @param state Имя состояния для которого заменяется группа систем.
    * @param id Уникальный идентификатор заменяемой группы систем. 
    * После замены группы, идентификатор остается прежним.
    * @param action Новая группа систем.
    */
-  replaceOnEnterGroup(t, e, i) {
-    let s = this._onEnterGroups.get(t);
-    return s ? (s = s.map((n) => n.id === e ? { action: i, id: e } : n), this._onEnterGroups.set(t, s), this) : this;
+  replaceOnEnterGroup(t, e) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    let i = this._onEnterGroups.get(this._editedState.name);
+    return i ? (i = i.map((s) => s.id === t ? { action: e, id: t } : s), this._onEnterGroups.set(this._editedState.name, i), this) : this;
   }
   /**
    * @description
    * Заменяет указанную группу систем onExit для указанного состояния новой группой.
    * 
-   * @param state Имя состояния для которого заменяется группа систем.
    * @param id Уникальный идентификатор заменяемой группы систем. 
    * После замены группы, идентификатор остается прежним.
    * @param action Новая группа систем.
    */
-  replaceOnExitGroup(t, e, i) {
-    let s = this._onExitGroups.get(t);
-    return s ? (s = s.map((n) => n.id === e ? { action: i, id: e } : n), this._onExitGroups.set(t, s), this) : this;
+  replaceOnExitGroup(t, e) {
+    if (!this._editedState)
+      throw new Error("State is not edited");
+    let i = this._onExitGroups.get(this._editedState.name);
+    return i ? (i = i.map((s) => s.id === t ? { action: e, id: t } : s), this._onExitGroups.set(this._editedState.name, i), this) : this;
   }
   // ==================================== //
   //             BUILD                    //
@@ -632,10 +621,10 @@ class b {
    * @returns Инстанс FSM.
    */
   build() {
-    const t = d.instance.get(f);
+    const t = c.instance.get(l);
     return this.validateInitialState(), this.validateTransitions(), this._config.states.forEach((e) => {
       this.buildOnEnterActions(e), this.buildOnExitActions(e);
-    }), new x(t, this._config);
+    }), new g(t, this._config);
   }
   buildOnEnterActions(t) {
     var s;
@@ -675,7 +664,7 @@ class b {
     }
   }
 }
-class v {
+class O {
   create(t, e) {
     return this._builder = new b(t, e), this.setup(this._builder), this._builder.build();
   }
@@ -684,10 +673,10 @@ class v {
   }
 }
 export {
-  w as EmpressStoreAdapter,
+  x as EmpressStoreAdapter,
   G as EmpressStoreFactory,
-  x as FSM,
+  g as FSM,
   b as FSMBuilder,
-  v as FSMFactory,
-  p as TransitionStrategy
+  O as FSMFactory,
+  S as TransitionStrategy
 };

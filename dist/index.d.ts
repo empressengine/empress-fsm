@@ -179,14 +179,14 @@ export declare class FSM<T extends object> implements IFSM<T> {
  * const builder = new FSMBuilder<IGlobalStore>('global', store);
  *
  * builder
- *     .setInitialState('connection')
- *     .addState('connection')
- *       .addTransition('loading', state => state.connected)
- *     .addState('loading')
- *       .addTransition('main', state => state.loaded)
- *       .addOnEnterGroup(LoadAssetsGroup, 'LoadAssetsGroup')
- *     .addState('main')
- *       .addOnEnterChain((chain, data) => {
+ *     .initialState('connection')
+ *     .state('connection')
+ *       .transition('loading', state => state.connected)
+ *     .state('loading')
+ *       .transition('main', state => state.loaded)
+ *       .group(LoadAssetsGroup, 'LoadAssetsGroup')
+ *     .state('main')
+ *       .onEnterChain((chain, data) => {
  *         chain
  *             .add(ScenesChangeSceneSystem,{ scene: MainScene }, { canExecute: () => data.to === 'main' })
  *       })
@@ -214,14 +214,14 @@ export declare class FSMBuilder<T extends object> {
      *
      * @param value Начальное состояние FSM.
      */
-    setInitialState(value: string): this;
+    initialState(value: string): this;
     /**
      * @description
      * Добавляет новое состояние в конфигурацию FSM.
      *
      * @param name Имя состояния.
      */
-    addState(name: string): this;
+    state(name: string): this;
     /**
      * @description
      * Удаляет состояние из конфигурации FSM.
@@ -235,14 +235,12 @@ export declare class FSMBuilder<T extends object> {
      *
      * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
      */
-    addSubStates(fsm: IFSM<T>): this;
+    subStates(fsm: IFSM<T>): this;
     /**
      * @description
-     * Удаляет под-состояния из конфигурации FSM.
-     *
-     * @param state Имя состояния.
+     * Удаляет под-состояния из конфигурации FSM для текущего состояния.
      */
-    removeSubStates(state: string): this;
+    removeSubStates(): this;
     /**
      * @description
      * Заменяет под-состояния в конфигурации FSM.
@@ -250,7 +248,7 @@ export declare class FSMBuilder<T extends object> {
      * @param state Имя состояния.
      * @param fsm Инстанс FSM устанавливаемый в качестве под-состояний.
      */
-    replaceSubStates(state: string, fsm: IFSM<T>): this;
+    replaceSubStates(fsm: IFSM<T>): this;
     /**
      * @description
      * Добавляет переход в конфигурацию состояния.
@@ -258,68 +256,62 @@ export declare class FSMBuilder<T extends object> {
      * @param to Имя состояния, в которое осуществляется переход.
      * @param condition Условие перехода.
      */
-    addTransition(to: string, condition: (state: T) => boolean): this;
+    transition(to: string, condition: (state: T) => boolean): this;
     /**
      * @description
      * Удаляет переход из конфигурации состояния.
      *
-     * @param state Имя состояния, из которого осуществляется переход.
      * @param to Имя состояния, в которое осуществляется переход.
      */
-    removeTransition(state: string, to: string): this;
+    removeTransition(to: string): this;
     /**
      * @description
      * Заменяет переход в конфигурации состояния.
      *
-     * @param state Имя состояния, из которого осуществляется переход.
      * @param to Имя состояния, в которое осуществляется переход.
      * @param condition Новое условие перехода.
      */
-    replaceTransition(state: string, to: string, condition: (state: T) => boolean): this;
+    replaceTransition(to: string, condition: (state: T) => boolean): this;
     /**
      * @description
      * Добавляет действие onEnter в конфигурацию состояния.
      *
      * @param action Действие, которое будет добавлено в конфигурацию состояния.
      */
-    addOnEnterChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
+    onEnterChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
     /**
      * @description
      * Добавляет действие onExit в конфигурацию состояния.
      *
      * @param action Действие, которое будет добавлено в конфигурацию состояния.
      */
-    addOnExitChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
+    onExitChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
     /**
      * @description
      * Удаляет действие onEnter из конфигурации состояния.
      *
      * @param state Имя состояния из которого удаляется дейсвтие.
      */
-    removeOnEnterChain(state: string): this;
+    removeOnEnterChain(): this;
     /**
      * @description
      * Удаляет действие onExit из конфигурации состояния.
-     *
-     * @param state Имя состояния из которого удаляется дейсвтие.
      */
-    removeOnExitChain(state: string): this;
+    removeOnExitChain(): this;
     /**
      * @description
      * Заменяет действие onEnter для указанного состояния в конфигурации состояния.
      *
-     * @param state Имя состояния для которого заменяется дейсвтие.
      * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
      */
-    replaceOnEnterChain(state: string, action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
+    replaceOnEnterChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
     /**
      * @description
      * Заменяет действие onExit для указанного состояния в конфигурации состояния.
      *
-     * @param state Имя состояния для которого заменяется дейсвтие.
      * @param action Новое действие, которое будет добавлено в конфигурацию состояния.
      */
-    replaceOnExitChain(state: string, action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
+    replaceOnExitChain(action: (chain: SystemChain, data: IStateLifeCycleData<T>) => void): this;
     /**
      * @description
      * Добавляет группу систем onEnter в конфигурацию состояния.
@@ -328,49 +320,36 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnEnterGroup(action: GroupType<T>, id?: string): this;
-    /**
-     * @description
-     * Добавляет группу систем onEnter для указанного состояния в конфигурацию состояния.
-     *
-     * @param state Имя состояния для которого добавляется группа систем.
-     * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-     * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-     * генерируется автоматически.
-     */
-    addOnEnterGroupToState(state: string, action: GroupType<T>, id?: string): this;
+    onEnterGroup(action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния перед указанной группой.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnEnterGroupBefore(state: string, groupId: string, action: GroupType<T>, id?: string): this;
+    onEnterGroupBefore(groupId: string, action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния после указанной группы.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnEnterGroupAfter(state: string, groupId: string, action: GroupType<T>, id?: string): this;
+    onEnterGroupAfter(groupId: string, action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния в начало списка групп.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnEnterGroupToStart(state: string, action: GroupType<T>, id?: string): this;
+    onEnterGroupToStart(action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit в конфигурацию состояния.
@@ -379,85 +358,68 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnExitGroup(action: GroupType<T>, id?: string): this;
-    /**
-     * @description
-     * Добавляет группу систем onExit для указанного состояния в конфигурацию состояния.
-     *
-     * @param state Имя состояния для которого добавляется группа систем.
-     * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
-     * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
-     * генерируется автоматически.
-     */
-    addOnExitGroupToState(state: string, action: GroupType<T>, id?: string): this;
+    onExitGroup(action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit для указанного состояния перед указанной группой.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, перед которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnExitGroupBefore(state: string, groupId: string, action: GroupType<T>, id?: string): this;
+    onExitGroupBefore(groupId: string, action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу действий onExit для указанного состояния после указанной группы.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param groupId Уникальный идентификатор группы систем, после которой будет добавлена новая группа.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnExitGroupAfter(state: string, groupId: string, action: GroupType<T>, id?: string): this;
+    onExitGroupAfter(groupId: string, action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit для указанного состояния в начало списка групп.
      *
-     * @param state Имя состояния для которого добавляется группа систем.
      * @param action Группа систем, которая будет добавлена в конфигурацию состояния.
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    addOnExitGroupToStart(state: string, action: GroupType<T>, id?: string): this;
+    onExitGroupToStart(action: GroupType<T>, id?: string): this;
     /**
      * @description
      * Удаляет группу систем onEnter для указанного состояния.
      *
-     * @param state Имя состояния для которого удаляется группа систем.
      * @param id Уникальный идентификатор группы систем.
      */
-    removeOnEnterGroup(state: string, id: string): this;
+    removeOnEnterGroup(id: string): this;
     /**
      * @description
      * Удаляет группу систем onExit для указанного состояния.
      *
-     * @param state Имя состояния для которого удаляется группа систем.
      * @param id Уникальный идентификатор группы систем.
      */
-    removeOnExitGroup(state: string, id: string): this;
+    removeOnExitGroup(id: string): this;
     /**
      * @description
      * Заменяет указанную группу систем onEnter для указанного состояния новой группой.
      *
-     * @param state Имя состояния для которого заменяется группа систем.
      * @param id Уникальный идентификатор заменяемой группы систем.
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    replaceOnEnterGroup(state: string, id: string, action: GroupType<T>): this;
+    replaceOnEnterGroup(id: string, action: GroupType<T>): this;
     /**
      * @description
      * Заменяет указанную группу систем onExit для указанного состояния новой группой.
      *
-     * @param state Имя состояния для которого заменяется группа систем.
      * @param id Уникальный идентификатор заменяемой группы систем.
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    replaceOnExitGroup(state: string, id: string, action: GroupType<T>): this;
+    replaceOnExitGroup(id: string, action: GroupType<T>): this;
     /**
      * @description
      * Строит конфигурацию FSM.
