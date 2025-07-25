@@ -320,7 +320,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onEnterGroup(action: GroupType<T>, id?: string): this;
+    onEnterGroup(action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния перед указанной группой.
@@ -330,7 +330,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onEnterGroupBefore(groupId: string, action: GroupType<T>, id?: string): this;
+    onEnterGroupBefore(groupId: string, action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния после указанной группы.
@@ -340,7 +340,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onEnterGroupAfter(groupId: string, action: GroupType<T>, id?: string): this;
+    onEnterGroupAfter(groupId: string, action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onEnter для указанного состояния в начало списка групп.
@@ -349,7 +349,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onEnterGroupToStart(action: GroupType<T>, id?: string): this;
+    onEnterGroupToStart(action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit в конфигурацию состояния.
@@ -358,7 +358,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onExitGroup(action: GroupType<T>, id?: string): this;
+    onExitGroup(action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit для указанного состояния перед указанной группой.
@@ -368,7 +368,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onExitGroupBefore(groupId: string, action: GroupType<T>, id?: string): this;
+    onExitGroupBefore(groupId: string, action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу действий onExit для указанного состояния после указанной группы.
@@ -378,7 +378,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onExitGroupAfter(groupId: string, action: GroupType<T>, id?: string): this;
+    onExitGroupAfter(groupId: string, action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Добавляет группу систем onExit для указанного состояния в начало списка групп.
@@ -387,7 +387,7 @@ export declare class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    onExitGroupToStart(action: GroupType<T>, id?: string): this;
+    onExitGroupToStart(action: GroupType<any>, id?: string): this;
     /**
      * @description
      * Удаляет группу систем onEnter для указанного состояния.
@@ -410,7 +410,7 @@ export declare class FSMBuilder<T extends object> {
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    replaceOnEnterGroup(id: string, action: GroupType<T>): this;
+    replaceOnEnterGroup(id: string, action: GroupType<any>): this;
     /**
      * @description
      * Заменяет указанную группу систем onExit для указанного состояния новой группой.
@@ -419,7 +419,7 @@ export declare class FSMBuilder<T extends object> {
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    replaceOnExitGroup(id: string, action: GroupType<T>): this;
+    replaceOnExitGroup(id: string, action: GroupType<any>): this;
     /**
      * @description
      * Строит конфигурацию FSM.
