@@ -341,7 +341,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onEnterGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onEnterGroup(action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -362,7 +362,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onEnterGroupBefore(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onEnterGroupBefore(groupId: string, action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -383,7 +383,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onEnterGroupAfter(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onEnterGroupAfter(groupId: string, action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -403,7 +403,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onEnterGroupToStart(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onEnterGroupToStart(action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -423,7 +423,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onExitGroup(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onExitGroup(action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -444,7 +444,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onExitGroupBefore(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onExitGroupBefore(groupId: string, action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -465,7 +465,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onExitGroupAfter(groupId: string, action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onExitGroupAfter(groupId: string, action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -485,7 +485,7 @@ export class FSMBuilder<T extends object> {
      * @param id Уникальный идентификатор группы систем. Необязательный параметр, по-умолчанию
      * генерируется автоматически.
      */
-    public onExitGroupToStart(action: GroupType<T>, id: string = Utils.uuid()): this {
+    public onExitGroupToStart(action: GroupType<any>, id: string = Utils.uuid()): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -543,7 +543,7 @@ export class FSMBuilder<T extends object> {
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    public replaceOnEnterGroup(id: string, action: GroupType<T>): this {
+    public replaceOnEnterGroup(id: string, action: GroupType<any>): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
@@ -564,7 +564,7 @@ export class FSMBuilder<T extends object> {
      * После замены группы, идентификатор остается прежним.
      * @param action Новая группа систем.
      */
-    public replaceOnExitGroup(id: string, action: GroupType<T>): this {
+    public replaceOnExitGroup(id: string, action: GroupType<any>): this {
         if(!this._editedState) {
             throw new Error('State is not edited');
         }
